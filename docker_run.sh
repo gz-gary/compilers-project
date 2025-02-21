@@ -1,0 +1,1 @@
+docker run -it -v $(pwd)/src:/workspace compilers-env /bin/bash
