@@ -1,3 +1,4 @@
+.vscode
 lab1/Code/parser
 lab1/Code/lex.yy.c
 lab1/Code/syntax.tab.c
