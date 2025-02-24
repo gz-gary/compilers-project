@@ -32,12 +32,12 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
-.PHONY: clean test
-test:
+.PHONY: clean test token_test
+test: parser
 	@echo "-------------test1--------------"
-	./parser ../Test/test1.cmm
-	@echo "-------------test2--------------"
-	./parser ../Test/test2.cmm
+	./parser ../Test/Lab1_exp_calc1.txt
+# @echo "-------------test2--------------"
+# ./parser ../Test/test2.cmm
 	@echo "-------------test--------------"
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output

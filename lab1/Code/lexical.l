@@ -17,8 +17,16 @@ type     (int)|(float)
 newline  (\r|\n|\r\n)
 
 %%
-(0|([1-9]{digit}*)) { printf("got int %s\n", yytext); return INT; }
-({digit}*\.{digit}+|{digit}+\.) { printf("got float %s\n", yytext); return FLOAT; }
+(0|([1-9]{digit}*)) { 
+    yylval.type_int = atoi(yytext);
+    printf("got int %s\n", yytext);
+    return INT; 
+}
+({digit}*\.{digit}+|{digit}+\.) { 
+    yylval.type_float = atof(yytext);
+    printf("got float %s\n", yytext); 
+    return FLOAT; 
+}
 
 {type} { return TYPE; }
 struct { return STRUCT; }
