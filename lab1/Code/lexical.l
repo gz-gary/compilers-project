@@ -20,6 +20,7 @@ newline  (\r|\n|\r\n)
 float    ({digit}*\.{digit}+|{digit}+\.)
 
 %%
+<<<<<<< HEAD
 (0|([1-9]{digit}*)) {
     yylval = ast_new_node(AST_NODE_INT);
     yylval->attr.int_value = atoi(yytext);
@@ -34,6 +35,17 @@ float    ({digit}*\.{digit}+|{digit}+\.)
     yylval = ast_new_node(AST_NODE_FLOAT);
     yylval->attr.float_value = atof(yytext);
     return FLOAT;
+=======
+(0|([1-9]{digit}*)) { 
+    yylval.type_int = atoi(yytext);
+    printf("got int %s\n", yytext);
+    return INT; 
+}
+({digit}*\.{digit}+|{digit}+\.) { 
+    yylval.type_float = atof(yytext);
+    printf("got float %s\n", yytext); 
+    return FLOAT; 
+>>>>>>> 修改syntax.y使其识别表达式并求值
 }
 
 {type} {

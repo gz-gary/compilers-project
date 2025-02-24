@@ -7,8 +7,16 @@
     int yyerror(const char *s);
 %}
 
-%token INT
-%token FLOAT
+%union {
+    int type_int;
+    double type_float;
+}
+
+%type <type_int> UINT PINT INT_UNION
+%type <type_float> FLOAT_UNION PFLOAT Exp Calc
+
+%token <type_int> INT
+%token <type_float> FLOAT
 %token ID
 %token SEMI
 %token COMMA
@@ -44,11 +52,9 @@
 %right NOT
 %left LP RP LB RB DOT
 
-%nonassoc LOWER_THAN_ELSE
-%nonassoc ELSE
-
 %%
 
+<<<<<<< HEAD
 Program: ExtDefList {
     $$ = ast_new_node(AST_NODE_Program);
     ast_add_child($$, $1);
@@ -260,6 +266,22 @@ DefList: Def DefList {
     $$->attr.lineno = $1->attr.lineno;
 }
     | { $$ = ast_new_node(AST_NODE_DefList); } /* empty */
+=======
+Calc: Exp { printf("Calc %lf\n", $1);}
+    ;
+
+/* 删除了bool相关的求值 */
+Exp:  Exp AND Exp { $$ = $1 && $3; }
+    | Exp OR Exp { $$ = $1 || $3; }
+    | Exp PLUS Exp { $$ = $1 + $3; }
+    | Exp MINUS Exp { $$ = $1 - $3; }
+    | Exp STAR Exp { $$ = $1 * $3; }
+    | Exp DIV Exp { $$ = $1 / $3; }
+    | LP Exp RP { $$ = $2; }
+    | MINUS Exp { $$ = -$2; }
+    | INT_UNION { $$ = $1; }
+    | FLOAT_UNION { $$ = $1; }
+>>>>>>> 修改syntax.y使其识别表达式并求值
     ;
 Def: Specifier DecList SEMI {
     $$ = ast_new_node(AST_NODE_Def);
@@ -282,6 +304,7 @@ DecList: Dec {
     $$->attr.lineno = $1->attr.lineno;
 }
     ;
+<<<<<<< HEAD
 Dec: VarDec {
     $$ = ast_new_node(AST_NODE_Dec);
     ast_add_child($$, $1);
@@ -294,6 +317,9 @@ Dec: VarDec {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+=======
+PINT: PLUS INT { $$ = $2; }
+>>>>>>> 修改syntax.y使其识别表达式并求值
     ;
 
 Exp: Exp ASSIGNOP Exp {
@@ -423,6 +449,7 @@ Exp: Exp ASSIGNOP Exp {
     $$->attr.lineno = $1->attr.lineno;
 }
     ;
+<<<<<<< HEAD
 
 Args: Exp COMMA Args {
     $$ = ast_new_node(AST_NODE_Args);
@@ -436,6 +463,9 @@ Args: Exp COMMA Args {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+=======
+PFLOAT: PLUS FLOAT { $$ = $2; }
+>>>>>>> 修改syntax.y使其识别表达式并求值
     ;
 
 %%

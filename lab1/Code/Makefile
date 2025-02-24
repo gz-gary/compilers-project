@@ -32,6 +32,7 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
+<<<<<<< HEAD
 .PHONY: clean test
 test: parser
 #	@echo "-------------test1--------------"
@@ -42,6 +43,14 @@ test: parser
 	./parser ../Test/test3.cmm
 	@echo "-------------test4--------------"
 	./parser ../Test/test4.cmm
+=======
+.PHONY: clean test token_test
+test: parser
+	@echo "-------------test1--------------"
+	./parser ../Test/Lab1_exp_calc1.txt
+# @echo "-------------test2--------------"
+# ./parser ../Test/test2.cmm
+>>>>>>> 修改syntax.y使其识别表达式并求值
 	@echo "-------------test--------------"
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
