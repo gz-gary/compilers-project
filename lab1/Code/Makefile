@@ -38,7 +38,7 @@ test:
 	./parser ../Test/test1.cmm
 	@echo "-------------test2--------------"
 	./parser ../Test/test2.cmm
-	@echo "-------------test---------------"
+	@echo "-------------test--------------"
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)

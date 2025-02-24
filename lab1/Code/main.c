@@ -17,6 +17,7 @@ int main(int argc, char const *argv[]) {
         }
         yyrestart(f);
     }
-    while (yylex() != 0);
+    // while (yylex() != 0);
+    yyparse();
     return 0;
 }
