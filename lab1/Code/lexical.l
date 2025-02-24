@@ -1,7 +1,7 @@
 %option yylineno
 %{
     #include "syntax.tab.h"
-    
+
     int yycolumn = 1;
     #define YY_USER_ACTION \
         yylloc.first_line = yylloc.last_line = yylineno; \
@@ -12,10 +12,43 @@
 
 digit    [0-9]
 letter   [_a-zA-Z]
+relop    (!=)|(==)|(<)|(>)|(<=)|(>=)
+type     (int)|(float)
 
 %%
-{digit}+ { printf("Integer value %d\n", atoi(yytext)); yylval = atoi(yytext); return INT; }
-{letter}+ { printf("String value %s\n", yytext); yylval = yyleng; return WORD; }
+[+-]?(0|([1-9]{digit}*)) { printf("got int %s\n", yytext); return INT; }
+[+-]?({digit}*\.{digit}+|{digit}+\.) { printf("got float %s\n", yytext); return FLOAT; }
+
+{type} { return TYPE; }
+struct { return STRUCT; }
+return { return RETURN; }
+if { return IF; }
+else { return ELSE; }
+while { return WHILE; }
+
+{letter}({letter}|{digit})* { return ID; }
+
+; { return SEMI; }
+, { return COMMA; }
+= { return ASSIGNOP; }
+{relop} { return RELOP; }
+\+ { return PLUS; }
+- { return MINUS; }
+\* { return STAR; }
+\/ { return DIV; }
+&& { return AND; }
+\|\| { return OR; }
+\. { return DOT; }
+\! { return NOT; }
+\( { return LP; }
+\) { return RP; }
+\[ { return LB; }
+\] { return RB; }
+\{ { return LC; }
+\} { return RC; }
+
 \n { yycolumn = 1; }
+\t { /* do nothing */ }
+" " { /* do nothing */ }
 . { printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
 %%

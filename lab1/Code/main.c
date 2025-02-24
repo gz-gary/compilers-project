@@ -2,6 +2,7 @@
 
 extern int yyparse();
 extern int yyrestart(FILE *);
+extern int yylex();
 
 void yyerror(const char *s) {
     fprintf(stderr, "Syntax error: %s\n", s);
@@ -16,6 +17,6 @@ int main(int argc, char const *argv[]) {
         }
         yyrestart(f);
     }
-    yyparse();
+    while (yylex() != 0);
     return 0;
 }
