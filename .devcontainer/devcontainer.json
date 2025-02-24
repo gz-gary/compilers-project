@@ -4,6 +4,7 @@
         "dockerfile": "../Dockerfile",
         "context": ".."
     },
+    "image": "compilers-env",
     "customizations": {
         "vscode": {
             "settings": {

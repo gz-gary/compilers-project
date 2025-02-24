@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y -qq \
     gcc-7 \
     gdb \
     git \
+    vim \
     python3.8 \
     python3-pip \
     python2-minimal && \
