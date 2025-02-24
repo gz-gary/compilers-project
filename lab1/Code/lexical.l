@@ -14,6 +14,7 @@ digit    [0-9]
 letter   [_a-zA-Z]
 relop    (!=)|(==)|(<)|(>)|(<=)|(>=)
 type     (int)|(float)
+newline  (\r|\n|\r\n)
 
 %%
 [+-]?(0|([1-9]{digit}*)) { printf("got int %s\n", yytext); return INT; }
@@ -47,7 +48,7 @@ while { return WHILE; }
 \{ { return LC; }
 \} { return RC; }
 
-\n { yycolumn = 1; }
+{newline} { yycolumn = 1; }
 \t { /* do nothing */ }
 " " { /* do nothing */ }
 . { printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
