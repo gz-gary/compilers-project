@@ -49,90 +49,333 @@
 
 %%
 
-Program: ExtDefList
+Program: ExtDefList {
+    $$ = ast_new_node(AST_NODE_Program);
+    ast_add_child($$, $1);
+    ast_set_root($$);
+}
     ;
-ExtDefList: ExtDef ExtDefList
-    | /* empty */
+ExtDefList: ExtDef ExtDefList {
+    $$ = ast_new_node(AST_NODE_ExtDefList);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | { $$ = ast_new_node(AST_NODE_ExtDefList); } /* empty */
     ;
-ExtDef : Specifier ExtDecList SEMI
-    | Specifier SEMI
-    | Specifier FunDec CompSt
+ExtDef : Specifier ExtDecList SEMI {
+    $$ = ast_new_node(AST_NODE_ExtDef);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Specifier SEMI {
+    $$ = ast_new_node(AST_NODE_ExtDef);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Specifier FunDec CompSt {
+    $$ = ast_new_node(AST_NODE_ExtDef);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
     ;
-ExtDecList: VarDec
-    | VarDec COMMA ExtDecList
-    ;
-
-Specifier: TYPE
-    | StructSpecifier
-    ;
-StructSpecifier: STRUCT OptTag LC DefList RC
-    | STRUCT Tag
-    ;
-OptTag: ID
-    | /* empty */
-    ;
-Tag: ID
-    ;
-
-VarDec: ID
-    | VarDec LB INT RB
-    ;
-FunDec: ID LP VarList RP
-    | ID LP RP
-    ;
-VarList: ParamDec COMMA VarList
-    | ParamDec
-    ;
-ParamDec: Specifier VarDec
-    ;
-
-CompSt: LC DefList StmtList RC
-StmtList: Stmt StmtList
-    | /* empty */
-    ;
-Stmt: Exp SEMI
-    | CompSt
-    | RETURN Exp SEMI
-    | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE
-    | IF LP Exp RP Stmt ELSE Stmt
-    | WHILE LP Exp RP Stmt
+ExtDecList: VarDec {
+    $$ = ast_new_node(AST_NODE_ExtDecList);
+    ast_add_child($$, $1);
+}
+    | VarDec COMMA ExtDecList {
+    $$ = ast_new_node(AST_NODE_ExtDecList);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
     ;
 
-DefList: Def DefList
-    | /* empty */
+Specifier: TYPE {
+    $$ = ast_new_node(AST_NODE_Specifier);
+    ast_add_child($$, $1);
+}
+    | StructSpecifier {
+    $$ = ast_new_node(AST_NODE_Specifier);
+    ast_add_child($$, $1);
+}
     ;
-Def: Specifier DecList SEMI
+StructSpecifier: STRUCT OptTag LC DefList RC {
+    $$ = ast_new_node(AST_NODE_StructSpecifier);
+    ast_add_child($$, $5);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | STRUCT Tag {
+    $$ = ast_new_node(AST_NODE_StructSpecifier);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
     ;
-DecList: Dec
-    | Dec COMMA DecList
+OptTag: ID { $$ = ast_new_node(AST_NODE_OptTag); ast_add_child($$, $1); }
+    | { $$ = ast_new_node(AST_NODE_OptTag); } /* empty */
     ;
-Dec: VarDec
-    | VarDec ASSIGNOP Exp
-    ;
-
-Exp: Exp ASSIGNOP Exp
-    | Exp AND Exp
-    | Exp OR Exp
-    | Exp RELOP Exp
-    | Exp PLUS Exp
-    | Exp MINUS Exp
-    | Exp STAR Exp
-    | Exp DIV Exp
-    | LP Exp RP
-    | MINUS Exp
-    | PLUS Exp
-    | NOT Exp
-    | ID LP Args RP
-    | ID LP RP
-    | Exp LB Exp RB
-    | Exp DOT ID
-    | ID
-    | INT
-    | FLOAT
+Tag: ID { $$ = ast_new_node(AST_NODE_Tag); ast_add_child($$, $1); }
     ;
 
-Args: Exp COMMA Args
-    | Exp
+VarDec: ID { $$ = ast_new_node(AST_NODE_VarDec); ast_add_child($$, $1); }
+    | VarDec LB INT RB {
+    $$ = ast_new_node(AST_NODE_VarDec);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    ;
+FunDec: ID LP VarList RP {
+    $$ = ast_new_node(AST_NODE_FunDec);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | ID LP RP {
+    $$ = ast_new_node(AST_NODE_FunDec);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    ;
+VarList: ParamDec COMMA VarList {
+    $$ = ast_new_node(AST_NODE_VarList);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | ParamDec {
+    $$ = ast_new_node(AST_NODE_VarList);
+    ast_add_child($$, $1);
+}
+    ;
+ParamDec: Specifier VarDec {
+    $$ = ast_new_node(AST_NODE_ParamDec);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    ;
+
+CompSt: LC DefList StmtList RC {
+    $$ = ast_new_node(AST_NODE_CompSt);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    ;
+StmtList: Stmt StmtList {
+    $$ = ast_new_node(AST_NODE_StmtList);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | { $$ = ast_new_node(AST_NODE_StmtList); } /* empty */
+    ;
+Stmt: Exp SEMI {
+    $$ = ast_new_node(AST_NODE_Stmt);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | CompSt {
+    $$ = ast_new_node(AST_NODE_Stmt);
+    ast_add_child($$, $1);
+}
+    | RETURN Exp SEMI {
+    $$ = ast_new_node(AST_NODE_Stmt);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE {
+    $$ = ast_new_node(AST_NODE_Stmt);
+    ast_add_child($$, $5);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | IF LP Exp RP Stmt ELSE Stmt {
+    $$ = ast_new_node(AST_NODE_Stmt);
+    ast_add_child($$, $7);
+    ast_add_child($$, $6);
+    ast_add_child($$, $5);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | WHILE LP Exp RP Stmt {
+    $$ = ast_new_node(AST_NODE_Stmt);
+    ast_add_child($$, $5);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    ;
+
+DefList: Def DefList {
+    $$ = ast_new_node(AST_NODE_DefList);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | { $$ = ast_new_node(AST_NODE_DefList); } /* empty */
+    ;
+Def: Specifier DecList SEMI {
+    $$ = ast_new_node(AST_NODE_Def);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    ;
+DecList: Dec {
+    $$ = ast_new_node(AST_NODE_DecList);
+    ast_add_child($$, $1);
+}
+    | Dec COMMA DecList {
+    $$ = ast_new_node(AST_NODE_DecList);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    ;
+Dec: VarDec {
+    $$ = ast_new_node(AST_NODE_Dec);
+    ast_add_child($$, $1);
+}
+    | VarDec ASSIGNOP Exp {
+    $$ = ast_new_node(AST_NODE_Dec);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    ;
+
+Exp: Exp ASSIGNOP Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp AND Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp OR Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp RELOP Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp PLUS Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp MINUS Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp STAR Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp DIV Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | LP Exp RP {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | MINUS Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | PLUS Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | NOT Exp {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | ID LP Args RP {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | ID LP RP {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp LB Exp RB {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $4);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp DOT ID {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | ID {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $1);
+}
+    | INT {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $1);
+}
+    | FLOAT {
+    $$ = ast_new_node(AST_NODE_Exp);
+    ast_add_child($$, $1);
+}
+    ;
+
+Args: Exp COMMA Args {
+    $$ = ast_new_node(AST_NODE_Args);
+    ast_add_child($$, $3);
+    ast_add_child($$, $2);
+    ast_add_child($$, $1);
+}
+    | Exp {
+    $$ = ast_new_node(AST_NODE_Args);
+    ast_add_child($$, $1);
+}
     ;
 
 %%
