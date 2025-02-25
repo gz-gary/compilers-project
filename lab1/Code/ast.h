@@ -62,7 +62,7 @@ struct ast_node_attr {
         float float_value;
         const char *str_value;
         const char *typename_value;
-    } value;
+    };
 };
 typedef struct ast_node_attr ast_node_attr;
 
