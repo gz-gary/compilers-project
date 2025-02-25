@@ -53,9 +53,17 @@ const char *AST_NODE_TYPE_NAMES[] = {
     "Args",
 };
 
-ast_node_t *ast_new_node() {
+ast_node_t *ast_root = NULL;
+
+ast_node_t *ast_set_root(ast_node_t *ast_node) {
+    ast_root = ast_node;
+}
+
+ast_node_t *ast_new_node(enum AST_NODE_TYPE type)
+{
     ast_node_t *new_node = malloc(sizeof(ast_node_t));
     new_node->tree_node = tree_new_node();
+    new_node->attr.type = type;
     return new_node;
 }
 

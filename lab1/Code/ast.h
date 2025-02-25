@@ -7,7 +7,7 @@
 const char *AST_NODE_TYPE_NAMES[48];
 
 struct ast_node_attr {
-    enum {
+    enum AST_NODE_TYPE {
         AST_NODE_INT = 0,
         AST_NODE_FLOAT,
         AST_NODE_ID,
@@ -72,7 +72,9 @@ struct ast_node_t {
 };
 typedef struct ast_node_t ast_node_t;
 
-ast_node_t *ast_new_node();
+ast_node_t *ast_root;
+ast_node_t *ast_set_root(ast_node_t *ast_node);
+ast_node_t *ast_new_node(enum AST_NODE_TYPE type);
 ast_node_t *ast_add_child(ast_node_t *father, ast_node_t *child);
 
 #endif
