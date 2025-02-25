@@ -1,56 +1,10 @@
+#ifndef AST_H
+#define AST_H
+
 #include "tree.h"
 #define tree2ast(node) (ast_node_t *)((void *)(&(node)) - (void *)(&(((ast_node_t *)(0))->tree_node)))
 
-const char *AST_NODE_TYPE_NAMES[] = {
-    "INT",
-    "FLOAT",
-    "ID",
-    "SEMI",
-    "COMMA",
-    "ASSIGNOP",
-    "RELOP",
-    "PLUS",
-    "MINUS",
-    "STAR",
-    "DIV",
-    "AND",
-    "OR",
-    "DOT",
-    "NOT",
-    "TYPE",
-    "LP",
-    "RP",
-    "LB",
-    "RB",
-    "LC",
-    "RC",
-    "STRUCT",
-    "RETURN",
-    "IF",
-    "ELSE",
-    "WHILE",
-    "Program",
-    "ExtDefList",
-    "ExtDef",
-    "ExtDecList",
-    "Specifier",
-    "StructSpecifier",
-    "OptTag",
-    "Tag",
-    "VarDec",
-    "FunDec",
-    "VarList",
-    "ParamDec",
-    "CompSt",
-    "StmtList",
-    "Stmt",
-    "DefList",
-    "Def",
-    "DecList",
-    "Dec",
-    "Exp",
-    "Args",
-};
+const char *AST_NODE_TYPE_NAMES[48];
 
 struct ast_node_attr {
     enum {
@@ -120,3 +74,5 @@ typedef struct ast_node_t ast_node_t;
 
 ast_node_t *ast_new_node();
 ast_node_t *ast_add_child(ast_node_t *father, ast_node_t *child);
+
+#endif
