@@ -117,30 +117,16 @@ Exp: Exp ASSIGNOP Exp
     | Exp DIV Exp
     | LP Exp RP
     | MINUS Exp
+    | PLUS Exp
     | NOT Exp
     | ID LP Args RP
     | ID LP RP
     | Exp LB Exp RB
     | Exp DOT ID
     | ID
-    | INT_UNION
-    | FLOAT_UNION
+    | INT
+    | FLOAT
     ;
-
-INT_UNION: UINT
-    | PINT
-    ;
-UINT: INT
-    ;
-PINT: PLUS INT
-    ;
-
-FLOAT_UNION: FLOAT
-    | PFLOAT
-    ;
-PFLOAT: PLUS FLOAT
-    ;
-
 
 Args: Exp COMMA Args
     | Exp
