@@ -58,7 +58,7 @@ while {
 
 {letter}({letter}|{digit})* {
     yylval = ast_new_node(AST_NODE_ID);
-    yylval->attr.str_value = str_new_copy(yytext);
+    yylval->attr.identifier_value = str_new_copy(yytext);
     return ID;
 }
 

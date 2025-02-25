@@ -62,11 +62,31 @@ ast_node_t *ast_set_root(ast_node_t *ast_node) {
 ast_node_t *ast_new_node(enum AST_NODE_TYPE type)
 {
     ast_node_t *new_node = malloc(sizeof(ast_node_t));
-    new_node->tree_node = tree_new_node();
+    tree_init_node(&(new_node->tree_node));
     new_node->attr.type = type;
     return new_node;
 }
 
 ast_node_t *ast_add_child(ast_node_t *father, ast_node_t *child) {
-    tree_add_child(father->tree_node, child->tree_node);
+    tree_add_child(&(father->tree_node), &(child->tree_node));
+}
+
+static void ast_walk_dfs(ast_node_t *ast_node, int depth, void (*action)(ast_node_t *, int)) {
+    action(ast_node, depth);
+    forall_children(&(ast_node->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        ast_walk_dfs(ast_child, depth + 1, action);
+    }
+}
+
+void ast_walk(void (*action)(ast_node_t *, int)) {
+    ast_walk_dfs(ast_root, 0, action);
+}
+
+int ast_is_leaf_node(ast_node_t *ast_node) {
+    return (ast_node->tree_node.first_child == NULL) ? 1 : 0;
+}
+
+int ast_is_term_node(ast_node_t *ast_node) {
+    return (ast_node->attr.type >= AST_NODE_Program) ? 1 : 0;
 }

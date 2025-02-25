@@ -2,7 +2,7 @@
 #define AST_H
 
 #include "tree.h"
-#define tree2ast(node) (ast_node_t *)((void *)(&(node)) - (void *)(&(((ast_node_t *)(0))->tree_node)))
+#define tree2ast(node) (ast_node_t *)((void *)(node) - (void *)(&(((ast_node_t *)(0))->tree_node)))
 
 const char *AST_NODE_TYPE_NAMES[48];
 
@@ -60,7 +60,7 @@ struct ast_node_attr {
     union {
         int int_value;
         float float_value;
-        const char *str_value;
+        const char *identifier_value;
         const char *typename_value;
     };
 };
@@ -68,7 +68,7 @@ typedef struct ast_node_attr ast_node_attr;
 
 struct ast_node_t {
     ast_node_attr attr;
-    tree_node_t *tree_node;
+    tree_node_t tree_node;
 };
 typedef struct ast_node_t ast_node_t;
 
@@ -76,5 +76,14 @@ ast_node_t *ast_root;
 ast_node_t *ast_set_root(ast_node_t *ast_node);
 ast_node_t *ast_new_node(enum AST_NODE_TYPE type);
 ast_node_t *ast_add_child(ast_node_t *father, ast_node_t *child);
+/*
+    ast_walk() will traverse the AST by depth-first-search algorithm
+    and call action(ast_node, depth) on each node.
+    - ast_node: a pointer to the node
+    - depth: depth of the node
+*/ 
+void ast_walk(void (*action)(ast_node_t *, int));
+int ast_is_leaf_node(ast_node_t *ast_node);
+int ast_is_term_node(ast_node_t *ast_node);
 
 #endif
