@@ -1,5 +1,8 @@
 %locations
 %{
+    #include "ast.h"
+    #define YYSTYPE ast_node_t*
+
     #include "lex.yy.c"
     int yyerror(const char *s);
 %}
