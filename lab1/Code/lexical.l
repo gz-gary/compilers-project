@@ -17,6 +17,7 @@ letter   [_a-zA-Z]
 relop    (!=)|(==)|(<)|(>)|(<=)|(>=)
 type     (int)|(float)
 newline  (\r|\n|\r\n)
+float    ({digit}*\.{digit}+|{digit}+\.)
 
 %%
 (0|([1-9]{digit}*)) {
@@ -24,7 +25,12 @@ newline  (\r|\n|\r\n)
     yylval->attr.int_value = atoi(yytext);
     return INT;
 }
-({digit}*\.{digit}+|{digit}+\.) {
+{float} {
+    yylval = ast_new_node(AST_NODE_FLOAT);
+    yylval->attr.float_value = atof(yytext);
+    return FLOAT;
+}
+{float}[eE][+-]?{digit}+ {
     yylval = ast_new_node(AST_NODE_FLOAT);
     yylval->attr.float_value = atof(yytext);
     return FLOAT;
