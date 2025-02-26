@@ -23,7 +23,7 @@ newline  (\r|\n|\r\n)
 float    ({digit}*\.{digit}+|{digit}+\.)
 
 %%
-({float}|{digit}+)[eE][+-]?({float}?) {
+({float}|{digit}+)[eE][+-]? {
     /* 异常float识别 */
     /* c里面1e3是double类型的 */
     lex_flag = 0; // Error type A
