@@ -23,14 +23,6 @@ newline  (\r|\n|\r\n)
 float    ({digit}*\.{digit}+|{digit}+\.)
 
 %%
-({float}|{digit}+)[eE][+-]? {
-    /* 异常float识别 */
-    /* c里面1e3是double类型的 */
-    lex_flag = 0; // Error type A
-    err_A(yytext, yylineno, ERR_A_LEXICAL);
-    // 暂时先return让处理进行下去
-    return FLOAT;
-}
 (0|([1-9]{digit}*)) {
     yylval = ast_new_node(AST_NODE_INT);
     yylval->attr.int_value = atoi(yytext);
@@ -158,6 +150,6 @@ while {
 
 . {
     lex_flag = 0; // Error type A
-    err_A(yytext, yylineno, ERR_A_MYSTERY);
+    log_mystery_char_error(yytext[0], yylineno);
 }
 %%
