@@ -17,7 +17,8 @@ void print_ast_node(ast_node_t *ast_node, int depth) {
 
     for (int i = 0; i < depth * 2; ++i) putchar(' ');
     printf("%s", AST_NODE_TYPE_NAMES[ast_node->attr.type]);
-
+    // printf("%s (%d)", AST_NODE_TYPE_NAMES[ast_node->attr.type], ast_node->attr.lineno);
+    
     switch (ast_node->attr.type) {
         case AST_NODE_INT:
             printf(": %d", ast_node->attr.int_value);
@@ -30,6 +31,29 @@ void print_ast_node(ast_node_t *ast_node, int depth) {
             break;
         case AST_NODE_TYPE:
             printf(": %s", ast_node->attr.typename_value);
+            break;
+        case AST_NODE_Program:
+        case AST_NODE_ExtDefList:
+        case AST_NODE_ExtDef:
+        case AST_NODE_ExtDecList:
+        case AST_NODE_Specifier:
+        case AST_NODE_StructSpecifier:
+        case AST_NODE_OptTag:
+        case AST_NODE_Tag:
+        case AST_NODE_VarDec:
+        case AST_NODE_FunDec:
+        case AST_NODE_VarList:
+        case AST_NODE_ParamDec:
+        case AST_NODE_CompSt:
+        case AST_NODE_StmtList:
+        case AST_NODE_Stmt:
+        case AST_NODE_DefList:
+        case AST_NODE_Def:
+        case AST_NODE_DecList:
+        case AST_NODE_Dec:
+        case AST_NODE_Exp:
+        case AST_NODE_Args:
+            printf(" (%d)", ast_node->attr.lineno);
             break;
         default:
             /* do something with line number */

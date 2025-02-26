@@ -53,12 +53,14 @@ Program: ExtDefList {
     $$ = ast_new_node(AST_NODE_Program);
     ast_add_child($$, $1);
     ast_set_root($$);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 ExtDefList: ExtDef ExtDefList {
     $$ = ast_new_node(AST_NODE_ExtDefList);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | { $$ = ast_new_node(AST_NODE_ExtDefList); } /* empty */
     ;
@@ -67,38 +69,45 @@ ExtDef : Specifier ExtDecList SEMI {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Specifier SEMI {
     $$ = ast_new_node(AST_NODE_ExtDef);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Specifier FunDec CompSt {
     $$ = ast_new_node(AST_NODE_ExtDef);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 ExtDecList: VarDec {
     $$ = ast_new_node(AST_NODE_ExtDecList);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | VarDec COMMA ExtDecList {
     $$ = ast_new_node(AST_NODE_ExtDecList);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 
 Specifier: TYPE {
     $$ = ast_new_node(AST_NODE_Specifier);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | StructSpecifier {
     $$ = ast_new_node(AST_NODE_Specifier);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 StructSpecifier: STRUCT OptTag LC DefList RC {
@@ -108,17 +117,27 @@ StructSpecifier: STRUCT OptTag LC DefList RC {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | STRUCT Tag {
     $$ = ast_new_node(AST_NODE_StructSpecifier);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
-OptTag: ID { $$ = ast_new_node(AST_NODE_OptTag); ast_add_child($$, $1); }
+OptTag: ID {
+    $$ = ast_new_node(AST_NODE_OptTag);
+    ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
+}
     | { $$ = ast_new_node(AST_NODE_OptTag); } /* empty */
     ;
-Tag: ID { $$ = ast_new_node(AST_NODE_Tag); ast_add_child($$, $1); }
+Tag: ID {
+    $$ = ast_new_node(AST_NODE_Tag);
+    ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
+}
     ;
 
 VarDec: ID { $$ = ast_new_node(AST_NODE_VarDec); ast_add_child($$, $1); }
@@ -128,6 +147,7 @@ VarDec: ID { $$ = ast_new_node(AST_NODE_VarDec); ast_add_child($$, $1); }
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 FunDec: ID LP VarList RP {
@@ -136,12 +156,14 @@ FunDec: ID LP VarList RP {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | ID LP RP {
     $$ = ast_new_node(AST_NODE_FunDec);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 VarList: ParamDec COMMA VarList {
@@ -149,16 +171,19 @@ VarList: ParamDec COMMA VarList {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | ParamDec {
     $$ = ast_new_node(AST_NODE_VarList);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 ParamDec: Specifier VarDec {
     $$ = ast_new_node(AST_NODE_ParamDec);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 
@@ -168,12 +193,14 @@ CompSt: LC DefList StmtList RC {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 StmtList: Stmt StmtList {
     $$ = ast_new_node(AST_NODE_StmtList);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | { $$ = ast_new_node(AST_NODE_StmtList); } /* empty */
     ;
@@ -181,16 +208,19 @@ Stmt: Exp SEMI {
     $$ = ast_new_node(AST_NODE_Stmt);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | CompSt {
     $$ = ast_new_node(AST_NODE_Stmt);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | RETURN Exp SEMI {
     $$ = ast_new_node(AST_NODE_Stmt);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE {
     $$ = ast_new_node(AST_NODE_Stmt);
@@ -199,6 +229,7 @@ Stmt: Exp SEMI {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | IF LP Exp RP Stmt ELSE Stmt {
     $$ = ast_new_node(AST_NODE_Stmt);
@@ -209,6 +240,7 @@ Stmt: Exp SEMI {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | WHILE LP Exp RP Stmt {
     $$ = ast_new_node(AST_NODE_Stmt);
@@ -217,6 +249,7 @@ Stmt: Exp SEMI {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 
@@ -224,6 +257,7 @@ DefList: Def DefList {
     $$ = ast_new_node(AST_NODE_DefList);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | { $$ = ast_new_node(AST_NODE_DefList); } /* empty */
     ;
@@ -232,28 +266,33 @@ Def: Specifier DecList SEMI {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 DecList: Dec {
     $$ = ast_new_node(AST_NODE_DecList);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Dec COMMA DecList {
     $$ = ast_new_node(AST_NODE_DecList);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 Dec: VarDec {
     $$ = ast_new_node(AST_NODE_Dec);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | VarDec ASSIGNOP Exp {
     $$ = ast_new_node(AST_NODE_Dec);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 
@@ -262,69 +301,81 @@ Exp: Exp ASSIGNOP Exp {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp AND Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp OR Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp RELOP Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp PLUS Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp MINUS Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp STAR Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp DIV Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | LP Exp RP {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | MINUS Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | PLUS Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | NOT Exp {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | ID LP Args RP {
     $$ = ast_new_node(AST_NODE_Exp);
@@ -332,12 +383,14 @@ Exp: Exp ASSIGNOP Exp {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | ID LP RP {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp LB Exp RB {
     $$ = ast_new_node(AST_NODE_Exp);
@@ -345,24 +398,29 @@ Exp: Exp ASSIGNOP Exp {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp DOT ID {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | ID {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | INT {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | FLOAT {
     $$ = ast_new_node(AST_NODE_Exp);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 
@@ -371,10 +429,12 @@ Args: Exp COMMA Args {
     ast_add_child($$, $3);
     ast_add_child($$, $2);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     | Exp {
     $$ = ast_new_node(AST_NODE_Args);
     ast_add_child($$, $1);
+    $$->attr.lineno = $1->attr.lineno;
 }
     ;
 

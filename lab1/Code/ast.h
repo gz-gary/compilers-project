@@ -63,6 +63,7 @@ struct ast_node_attr {
         const char *identifier_value;
         const char *typename_value;
     };
+    int lineno; // line number
 };
 typedef struct ast_node_attr ast_node_attr;
 

@@ -59,11 +59,13 @@ ast_node_t *ast_set_root(ast_node_t *ast_node) {
     ast_root = ast_node;
 }
 
+extern int yylineno;
 ast_node_t *ast_new_node(enum AST_NODE_TYPE type)
 {
     ast_node_t *new_node = malloc(sizeof(ast_node_t));
     tree_init_node(&(new_node->tree_node));
     new_node->attr.type = type;
+    new_node->attr.lineno = yylineno;
     return new_node;
 }
 
