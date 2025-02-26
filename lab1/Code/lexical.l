@@ -2,6 +2,7 @@
 %{
     #include "ast.h"
     #include "util.h"
+    #include "err.h"
     #include "syntax.tab.h"
 
     int yycolumn = 1;
@@ -10,6 +11,8 @@
         yylloc.first_column = yycolumn; \
         yylloc.last_column = yycolumn + yyleng - 1; \
         yycolumn += yyleng;
+
+    extern int lex_flag;
 %}
 
 digit    [0-9]
@@ -144,5 +147,8 @@ while {
 {newline} { yycolumn = 1; }
 \t { /* do nothing */ }
 " " { /* do nothing */ }
-. { printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+. {
+    lex_flag = 0; // Error type A
+    err_A(yytext, yylineno, ERR_A_MYSTERY);
+}
 %%

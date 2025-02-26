@@ -1,5 +1,7 @@
 int main()
 {
 	int i = 1;
-	int j = 2;
+	int j = ~2;
+	float x = i ^ j;
+	int y = ~~123;
 }

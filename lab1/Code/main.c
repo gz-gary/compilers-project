@@ -63,6 +63,8 @@ void print_ast_node(ast_node_t *ast_node, int depth) {
     putchar('\n');
 }
 
+int lex_flag = 1; // 1: print ast, 0: not print ast
+
 int main(int argc, char const *argv[]) {
     FILE *f = NULL;
     if (argc > 1) {
@@ -73,6 +75,8 @@ int main(int argc, char const *argv[]) {
         yyrestart(f);
     }
     yyparse();
-    ast_walk(print_ast_node);
+    if (lex_flag) { // 之后再研究一下语法分析那里怎么给错误报出来
+        ast_walk(print_ast_node);
+    }
     return 0;
 }
