@@ -15,8 +15,16 @@
 %type <type_int> UINT PINT INT_UNION
 %type <type_float> FLOAT_UNION PFLOAT Exp Calc
 
-%token <type_int> INT
-%token <type_float> FLOAT
+%union {
+    int type_int;
+    double type_float;
+}
+
+%type <type_int> UINT PINT INT_UNION
+%type <type_float> FLOAT_UNION PFLOAT Exp Calc
+
+%token <type_int> <type_int> INT
+%token <type_float> <type_float> FLOAT
 %token ID
 %token SEMI
 %token COMMA
@@ -73,6 +81,36 @@ Exp:  Exp AND Exp { $$ = $1 && $3; }
 PINT: PLUS INT { $$ = $2; }
     ;
 
+PFLOAT: PLUS FLOAT { $$ = $2; }
+%%
+
+Calc: Exp { printf("Calc %lf\n", $1);}
+    ;
+
+/* 删除了bool相关的求值 */
+Exp:  Exp AND Exp { $$ = $1 && $3; }
+    | Exp OR Exp { $$ = $1 || $3; }
+    | Exp PLUS Exp { $$ = $1 + $3; }
+    | Exp MINUS Exp { $$ = $1 - $3; }
+    | Exp STAR Exp { $$ = $1 * $3; }
+    | Exp DIV Exp { $$ = $1 / $3; }
+    | LP Exp RP { $$ = $2; }
+    | MINUS Exp { $$ = -$2; }
+    | INT_UNION { $$ = $1; }
+    | FLOAT_UNION { $$ = $1; }
+    ;
+
+INT_UNION: UINT
+    | PINT
+    ;
+UINT: INT
+    ;
+PINT: PLUS INT { $$ = $2; }
+    ;
+
+FLOAT_UNION: FLOAT
+    | PFLOAT
+    ;
 PFLOAT: PLUS FLOAT { $$ = $2; }
     ;
 
