@@ -2,6 +2,10 @@ int main()
 {
 	int i = 1;
 	int j = ~2;
-	float x = i ^ j;
-	int y = ~~123;
+	float a0 = 123e;
+	float a1 = 1.2e;
+	float a2 = 1.2e1.2;
+	float a3 = e2;
+	float x = i  = ^ j;
+	float a3 = e1.2;
 }
