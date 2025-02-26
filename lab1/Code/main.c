@@ -4,10 +4,6 @@
 extern int yyparse();
 extern int yyrestart(FILE *);
 
-void yyerror(const char *s) {
-    fprintf(stderr, "Syntax error: %s\n", s);
-}
-
 void print_ast_node(ast_node_t *ast_node, int depth) {
     /* 
         (handle epsilon production)

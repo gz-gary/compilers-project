@@ -1,7 +1,7 @@
 %locations
 %{
     #include "ast.h"
-    #include "err.h"
+    #include "log.h"
     #define YYSTYPE ast_node_t*
 
     #include "lex.yy.c"
