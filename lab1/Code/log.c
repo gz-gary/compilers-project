@@ -2,35 +2,35 @@
 #include <stdio.h>
 
 inline static void log_error_type(const char *error_type) {
-    fprintf(stderr, "Error type %s", error_type);
+    fprintf(stdout, "Error type %s", error_type);
 }
 
 inline static void log_error_lineno(int error_lineno) {
-    fprintf(stderr, "at Line %d", error_lineno);
+    fprintf(stdout, "at Line %d", error_lineno);
 }
 
 inline static void log_error_type_lineno(const char *error_type, int error_lineno) {
     log_error_type(error_type);
-    fprintf(stderr, " ");
+    fprintf(stdout, " ");
     log_error_lineno(error_lineno);
-    fprintf(stderr, ": ");
+    fprintf(stdout, ": ");
 }
 
 void log_mystery_char_error(char chr, int lineno) {
     log_error_type_lineno("A", lineno);
-    fprintf(stderr, "Mysterious characters \'%c\'", chr);
-    fprintf(stderr, "\n");
+    fprintf(stdout, "Mysterious characters \'%c\'", chr);
+    fprintf(stdout, "\n");
 }
 
 void log_invalid_token_error(const char *token, int lineno) {
     log_error_type_lineno("A", lineno);
-    fprintf(stderr, "invalid token \'%s\'", token);
-    fprintf(stderr, "\n");
+    fprintf(stdout, "invalid token \'%s\'", token);
+    fprintf(stdout, "\n");
 }
 
 void yyerror(const char *s) {
     log_error_type("B");
-    fprintf(stderr, ": ");
-    fprintf(stderr, "%s", s);
-    fprintf(stderr, "\n");
+    fprintf(stdout, ": ");
+    fprintf(stdout, "%s", s);
+    fprintf(stdout, "\n");
 }
