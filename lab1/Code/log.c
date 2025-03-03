@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 extern int parse_error;
+extern int yylineno;
 
 inline static void log_error_type(const char *error_type) {
     parse_error = 1;
@@ -33,6 +34,8 @@ void log_invalid_token_error(const char *token, int lineno) {
 
 void yyerror(const char *s) {
     log_error_type("B");
+    fprintf(stdout, " ");
+    log_error_lineno(yylineno);
     fprintf(stdout, ": ");
     fprintf(stdout, "%s", s);
     fprintf(stdout, "\n");
