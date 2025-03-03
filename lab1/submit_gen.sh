@@ -10,5 +10,6 @@ cp README submit
 cd Code && make
 cp parser ../submit
 make clean
+cd ../submit
+zip -r ../submit.zip *
 cd ..
-zip -r submit.zip submit
