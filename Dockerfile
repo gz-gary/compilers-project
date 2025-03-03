@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y -qq \
     gdb \
     git \
     vim \
+    zip \
     python3.8 \
     python3-pip \
     python2-minimal && \
