@@ -12,7 +12,7 @@
         yylloc.last_column = yycolumn + yyleng - 1; \
         yycolumn += yyleng;
 
-    extern int lex_flag;
+    extern int parse_error;
 %}
 
 digit    [0-9]
@@ -149,7 +149,7 @@ while {
 " " { /* do nothing */ }
 
 . {
-    lex_flag = 0; // Error type A
+    parse_error = 0; // Error type A
     log_mystery_char_error(yytext[0], yylineno);
 }
 %%

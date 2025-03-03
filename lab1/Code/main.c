@@ -36,7 +36,7 @@ void print_ast_node(ast_node_t *ast_node, int depth) {
     putchar('\n');
 }
 
-int lex_flag = 1; // 1: print ast, 0: not print ast
+int parse_error = 0;
 
 int main(int argc, char const *argv[]) {
     FILE *f = NULL;
@@ -48,7 +48,7 @@ int main(int argc, char const *argv[]) {
         yyrestart(f);
     }
     yyparse();
-    if (lex_flag) { // 之后再研究一下语法分析那里怎么给错误报出来
+    if (!parse_error) { // 不曾出错就打印AST, 否则什么也不做
         ast_walk(print_ast_node);
     }
     return 0;

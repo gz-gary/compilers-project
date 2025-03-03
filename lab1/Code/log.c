@@ -1,7 +1,10 @@
 #include "log.h"
 #include <stdio.h>
 
+extern int parse_error;
+
 inline static void log_error_type(const char *error_type) {
+    parse_error = 1;
     fprintf(stdout, "Error type %s", error_type);
 }
 
