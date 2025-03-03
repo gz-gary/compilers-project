@@ -32,7 +32,7 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
-.PHONY: clean test test1 test2 test3 test4
+.PHONY: clean test test1 test2 test3 test4 testOp
 test: parser test1 test2 test3 test4
 	@echo "-------------test--------------"
 
@@ -51,6 +51,10 @@ test3: parser
 test4: parser
 	@echo "-------------test4--------------"
 	./parser ../Test/test4.cmm
+
+testOp: parser
+	@echo "-------------testOp--------------"
+	./parser ../Test/优先级测试.cmm
 
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output

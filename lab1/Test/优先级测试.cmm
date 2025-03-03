@@ -1,0 +1,3 @@
+int a() {
+    x = y = 123+1.0e1/!-13*2/image.height;
+}
