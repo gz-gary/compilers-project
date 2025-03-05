@@ -65,7 +65,7 @@ ExtDefList: ExtDef ExtDefList {
 }
     | { $$ = ast_new_node(AST_NODE_ExtDefList); } /* empty */
     ;
-ExtDef : Specifier ExtDecList SEMI {
+ExtDef: Specifier ExtDecList SEMI {
     $$ = ast_new_node(AST_NODE_ExtDef);
     ast_add_child($$, $3);
     ast_add_child($$, $2);
@@ -85,6 +85,7 @@ ExtDef : Specifier ExtDecList SEMI {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+    | error SEMI
     ;
 ExtDecList: VarDec {
     $$ = ast_new_node(AST_NODE_ExtDecList);
@@ -150,6 +151,7 @@ VarDec: ID { $$ = ast_new_node(AST_NODE_VarDec); ast_add_child($$, $1); }
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+    | error RB
     ;
 FunDec: ID LP VarList RP {
     $$ = ast_new_node(AST_NODE_FunDec);
@@ -166,6 +168,7 @@ FunDec: ID LP VarList RP {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+    | error RP
     ;
 VarList: ParamDec COMMA VarList {
     $$ = ast_new_node(AST_NODE_VarList);
@@ -196,6 +199,7 @@ CompSt: LC DefList StmtList RC {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+    | error RC
     ;
 StmtList: Stmt StmtList {
     $$ = ast_new_node(AST_NODE_StmtList);
@@ -252,6 +256,7 @@ Stmt: Exp SEMI {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+    | error SEMI
     ;
 
 DefList: Def DefList {
