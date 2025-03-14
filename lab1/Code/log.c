@@ -32,7 +32,9 @@ void log_invalid_token_error(const char *token, int lineno) {
     fprintf(stdout, "\n");
 }
 
+extern int lexerr_thisline;
 void yyerror(const char *s) {
+    if (lexerr_thisline) return;
     log_error_type("B");
     fprintf(stdout, " ");
     log_error_lineno(yylineno);
