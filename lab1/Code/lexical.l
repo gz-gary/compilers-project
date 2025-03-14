@@ -13,6 +13,7 @@
         yycolumn += yyleng;
 
     extern int parse_error;
+    int lexerr_thisline = 0;
 %}
 
 digit    [0-9]
@@ -144,11 +145,12 @@ while {
     return RC;
 }
 
-{newline} { yycolumn = 1; }
+{newline} { lexerr_thisline = 0; yycolumn = 1; }
 \t { /* do nothing */ }
 " " { /* do nothing */ }
 
 . {
+    lexerr_thisline = 1;
     parse_error = 0; // Error type A
     log_mystery_char_error(yytext[0], yylineno);
 }
