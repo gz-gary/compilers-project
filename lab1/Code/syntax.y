@@ -3,6 +3,7 @@
     #include "ast.h"
     #include "log.h"
     #define YYSTYPE ast_node_t*
+    #define YYDEBUG 1
 
     #include "lex.yy.c"
     int yyerror(const char *s);
@@ -85,7 +86,6 @@ ExtDef: Specifier ExtDecList SEMI {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
-    | error SEMI
     ;
 ExtDecList: VarDec {
     $$ = ast_new_node(AST_NODE_ExtDecList);
@@ -151,7 +151,6 @@ VarDec: ID { $$ = ast_new_node(AST_NODE_VarDec); ast_add_child($$, $1); }
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
-    | error RB
     ;
 FunDec: ID LP VarList RP {
     $$ = ast_new_node(AST_NODE_FunDec);
@@ -168,7 +167,7 @@ FunDec: ID LP VarList RP {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
-    | error RP
+    | ID LP error RP
     ;
 VarList: ParamDec COMMA VarList {
     $$ = ast_new_node(AST_NODE_VarList);
@@ -199,7 +198,6 @@ CompSt: LC DefList StmtList RC {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
-    | error RC
     ;
 StmtList: Stmt StmtList {
     $$ = ast_new_node(AST_NODE_StmtList);
@@ -256,6 +254,9 @@ Stmt: Exp SEMI {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+    | IF LP error RP Stmt %prec LOWER_THAN_ELSE
+    | IF LP error RP Stmt ELSE Stmt
+    | WHILE LP error RP Stmt
     | error SEMI
     ;
 
@@ -274,6 +275,7 @@ Def: Specifier DecList SEMI {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+    | error SEMI
     ;
 DecList: Dec {
     $$ = ast_new_node(AST_NODE_DecList);
