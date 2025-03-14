@@ -36,6 +36,7 @@
 %token IF
 %token ELSE
 %token WHILE
+%token NEWLINE
 
 %right ASSIGNOP
 %left AND OR
@@ -256,6 +257,7 @@ Stmt: Exp SEMI {
 }
     | IF LP error RP Stmt %prec LOWER_THAN_ELSE
     | IF LP error RP Stmt ELSE Stmt
+    | WHILE LP error RC
     | WHILE LP error RP Stmt
     | error SEMI
     ;
