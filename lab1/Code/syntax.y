@@ -199,6 +199,7 @@ CompSt: LC DefList StmtList RC {
     ast_add_child($$, $1);
     $$->attr.lineno = $1->attr.lineno;
 }
+    | error RC
     ;
 StmtList: Stmt StmtList {
     $$ = ast_new_node(AST_NODE_StmtList);
