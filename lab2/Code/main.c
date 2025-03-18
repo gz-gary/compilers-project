@@ -1,39 +1,76 @@
 #include <stdio.h>
+#include <assert.h>
 #include "ast.h"
+#include "symbtable.h"
+#include "log.h"
 
 extern int yyparse();
 extern int yyrestart(FILE *);
 
-void print_ast_node(ast_node_t *ast_node, int depth) {
-    /* 
-        (handle epsilon production)
-        do nothing with leaf-node term
-    */
-    if (ast_is_term_node(ast_node) && ast_is_leaf_node(ast_node)) return;
-
-    for (int i = 0; i < depth * 2; ++i) putchar(' ');
-    printf("%s", AST_NODE_TYPE_NAMES[ast_node->attr.type]);
-    
-    switch (ast_node->attr.type) {
-        case AST_NODE_INT:
-            printf(": %d", ast_node->attr.int_value);
-            break;
-        case AST_NODE_FLOAT:
-            printf(": %f", ast_node->attr.float_value);
-            break;
-        case AST_NODE_ID:
-            printf(": %s", ast_node->attr.identifier_value);
-            break;
-        case AST_NODE_TYPE:
-            printf(": %s", ast_node->attr.typename_value);
-            break;
-        default:
-            if (ast_is_term_node(ast_node))
-                printf(" (%d)", ast_node->attr.lineno);
-            break;
+void handle_ast_vardec(ast_node_t *ast_vardec) {
+    forall_children(&(ast_vardec->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_ID) {
+            symbtable_add_entry(ast_child->attr.identifier_value);
+        } else if (ast_child->node_type == AST_NODE_VarDec) {
+            handle_ast_vardec(ast_child);
+        }
     }
-    
-    putchar('\n');
+}
+
+void handle_ast_dec(ast_node_t *ast_dec) {
+    forall_children(&(ast_dec->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_VarDec) {
+            handle_ast_vardec(ast_child);
+        }
+    }
+}
+
+void handle_ast_declist(ast_node_t *ast_declist) {
+    forall_children(&(ast_declist->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_DecList) {
+            handle_ast_declist(ast_child);
+            break;
+        } else if (ast_child->node_type == AST_NODE_Dec) handle_ast_dec(ast_child);
+    }
+}
+
+void handle_ast_def(ast_node_t *ast_def) {
+    forall_children(&(ast_def->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_DecList) {
+            handle_ast_declist(ast_child);
+            break;
+        }
+    }
+}
+
+void handle_ast_exp(ast_node_t *ast_exp) {
+    // 目前只处理产生式Exp -> ID
+    ast_node_t *ast_first_child = tree2ast(ast_exp->tree_node.first_child);
+    if ((ast_exp->tree_node.first_child)->next_brother == NULL && ast_first_child->node_type == AST_NODE_ID) {
+        if (symbtable_query_entry(ast_first_child->attr.identifier_value)) {
+            /* do some type checking */
+        } else {
+            log_semantics_error_prologue("1", ast_first_child->lineno);
+            fprintf(stdout, "Undefined variable \"%s\".\n", ast_first_child->attr.identifier_value);
+        }
+    }
+}
+
+void handle_ast_node(ast_node_t *ast_node, int depth) {
+    switch (ast_node->node_type) {
+    case AST_NODE_Def:
+        handle_ast_def(ast_node);
+        break;
+    case AST_NODE_Exp:
+        handle_ast_exp(ast_node);
+        break;
+    default:
+        break;
+    }
 }
 
 int parse_error = 0;
@@ -48,8 +85,7 @@ int main(int argc, char const *argv[]) {
         yyrestart(f);
     }
     yyparse();
-    if (!parse_error) { // 不曾出错就打印AST, 否则什么也不做
-        ast_walk(print_ast_node);
-    }
+    assert(!parse_error);
+    ast_walk(handle_ast_node, ast_walk_action_nop);
     return 0;
 }
