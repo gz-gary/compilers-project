@@ -151,7 +151,7 @@ while {
 
 . {
     lexerr_thisline = 1;
-    parse_error = 0; // Error type A
+    parse_error = 1; // Error type A
     log_mystery_char_error(yytext[0], yylineno);
 }
 %%

@@ -5,7 +5,6 @@ extern int parse_error;
 extern int yylineno;
 
 inline static void log_error_type(const char *error_type) {
-    parse_error = 1;
     fprintf(stdout, "Error type %s", error_type);
 }
 
@@ -34,6 +33,7 @@ void log_invalid_token_error(const char *token, int lineno) {
 
 extern int lexerr_thisline;
 void yyerror(const char *s) {
+    parse_error = 1;
     if (lexerr_thisline) return;
     log_error_type("B");
     fprintf(stdout, " ");
