@@ -42,3 +42,7 @@ void yyerror(const char *s) {
     fprintf(stdout, "%s", s);
     fprintf(stdout, "\n");
 }
+
+void log_semantics_error_prologue(const char *errid, int lineno) {
+    log_error_type_lineno(errid, lineno);
+}
