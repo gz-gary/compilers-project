@@ -1,5 +1,6 @@
 rm -rf submit
 mkdir -p submit/Code
+cp README submit
 cp Code/*.c submit/Code
 cp Code/*.h submit/Code
 cp Code/*.l submit/Code
