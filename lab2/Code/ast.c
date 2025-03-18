@@ -60,12 +60,12 @@ ast_node_t *ast_set_root(ast_node_t *ast_node) {
 }
 
 extern int yylineno;
-ast_node_t *ast_new_node(enum AST_NODE_TYPE type)
+ast_node_t *ast_new_node(enum AST_NODE_TYPE node_type)
 {
     ast_node_t *new_node = malloc(sizeof(ast_node_t));
     tree_init_node(&(new_node->tree_node));
-    new_node->attr.type = type;
-    new_node->attr.lineno = yylineno;
+    new_node->node_type = node_type;
+    new_node->lineno = yylineno;
     return new_node;
 }
 
@@ -95,5 +95,5 @@ int ast_is_leaf_node(ast_node_t *ast_node) {
 }
 
 int ast_is_term_node(ast_node_t *ast_node) {
-    return (ast_node->attr.type >= AST_NODE_Program) ? 1 : 0;
+    return (ast_node->node_type >= AST_NODE_Program) ? 1 : 0;
 }
