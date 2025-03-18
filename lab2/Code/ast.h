@@ -2,7 +2,7 @@
 #define AST_H
 
 #include "tree.h"
-#define tree2ast(node) (ast_node_t *)((void *)(node) - (void *)(&(((ast_node_t *)(0))->tree_node)))
+#define tree2ast(node) ((ast_node_t *)((void *)(node) - (void *)(&(((ast_node_t *)(0))->tree_node))))
 
 const char *AST_NODE_TYPE_NAMES[48];
 
