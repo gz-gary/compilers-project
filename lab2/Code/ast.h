@@ -79,11 +79,13 @@ ast_node_t *ast_new_node(enum AST_NODE_TYPE type);
 ast_node_t *ast_add_child(ast_node_t *father, ast_node_t *child);
 /*
     ast_walk() will traverse the AST by depth-first-search algorithm
-    and call action(ast_node, depth) on each node.
+    and call preorder_action(ast_node, depth) and postorder_action(ast_node, depth) on each node.
     - ast_node: a pointer to the node
     - depth: depth of the node
 */ 
-void ast_walk(void (*action)(ast_node_t *, int));
+typedef void (*ast_walk_action_t)(ast_node_t*, int);
+void ast_walk(ast_walk_action_t preorder_action, ast_walk_action_t postorder_action);
+void ast_walk_action_nop(ast_node_t*, int);
 int ast_is_leaf_node(ast_node_t *ast_node);
 int ast_is_term_node(ast_node_t *ast_node);
 

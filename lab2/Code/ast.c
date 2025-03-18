@@ -73,16 +73,21 @@ ast_node_t *ast_add_child(ast_node_t *father, ast_node_t *child) {
     tree_add_child(&(father->tree_node), &(child->tree_node));
 }
 
-static void ast_walk_dfs(ast_node_t *ast_node, int depth, void (*action)(ast_node_t *, int)) {
-    action(ast_node, depth);
+static void ast_walk_dfs(ast_node_t *ast_node, int depth, ast_walk_action_t preorder_action, ast_walk_action_t postorder_action) {
+    preorder_action(ast_node, depth);
     forall_children(&(ast_node->tree_node), child) {
         ast_node_t *ast_child = tree2ast(child);
-        ast_walk_dfs(ast_child, depth + 1, action);
+        ast_walk_dfs(ast_child, depth + 1, preorder_action, postorder_action);
     }
+    postorder_action(ast_node, depth);
 }
 
-void ast_walk(void (*action)(ast_node_t *, int)) {
-    ast_walk_dfs(ast_root, 0, action);
+void ast_walk(ast_walk_action_t preorder_action, ast_walk_action_t postorder_action) {
+    ast_walk_dfs(ast_root, 0, preorder_action, postorder_action);
+}
+
+void ast_walk_action_nop(ast_node_t *ast_node, int depth) {
+    return;
 }
 
 int ast_is_leaf_node(ast_node_t *ast_node) {
