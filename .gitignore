@@ -1,9 +1,9 @@
 .vscode
-lab1/Code/parser
-lab1/Code/lex.yy.c
-lab1/Code/syntax.tab.c
-lab1/Code/syntax.tab.h
-lab1/Code/syntax.output
-lab1/Code/*.o
+**/parser
+**/lex.yy.c
+**/syntax.tab.c
+**/syntax.tab.h
+**/syntax.output
+**/*.o
 **/submit
 **/*.zip
