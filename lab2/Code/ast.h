@@ -6,7 +6,7 @@
 
 const char *AST_NODE_TYPE_NAMES[48];
 
-enum AST_NODE_TYPE {
+enum ast_node_type_t {
     AST_NODE_INT = 0,
     AST_NODE_FLOAT,
     AST_NODE_ID,
@@ -58,7 +58,7 @@ enum AST_NODE_TYPE {
 };
 
 struct ast_node_t {
-    enum AST_NODE_TYPE node_type;
+    enum ast_node_type_t node_type;
     int lineno; // line number
     union {
         int int_value;
@@ -72,7 +72,7 @@ typedef struct ast_node_t ast_node_t;
 
 ast_node_t *ast_root;
 ast_node_t *ast_set_root(ast_node_t *ast_node);
-ast_node_t *ast_new_node(enum AST_NODE_TYPE node_type);
+ast_node_t *ast_new_node(enum ast_node_type_t node_type);
 ast_node_t *ast_add_child(ast_node_t *father, ast_node_t *child);
 /*
     ast_walk() will traverse the AST by depth-first-search algorithm

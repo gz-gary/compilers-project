@@ -13,3 +13,7 @@ int production_match(ast_node_t *ast_node, production_rec_t *rec, int length) {
     if (length > 0) return 0; // production is to short
     return 1;
 }
+
+int production_epsilon(ast_node_t *ast_node) {
+    return ast_node->tree_node.first_child == NULL;
+}

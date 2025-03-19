@@ -60,7 +60,7 @@ ast_node_t *ast_set_root(ast_node_t *ast_node) {
 }
 
 extern int yylineno;
-ast_node_t *ast_new_node(enum AST_NODE_TYPE node_type)
+ast_node_t *ast_new_node(enum ast_node_type_t node_type)
 {
     ast_node_t *new_node = malloc(sizeof(ast_node_t));
     tree_init_node(&(new_node->tree_node));
