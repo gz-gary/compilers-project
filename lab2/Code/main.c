@@ -3,15 +3,26 @@
 #include "ast.h"
 #include "symbtable.h"
 #include "log.h"
+#include "production.h"
 
 extern int yyparse();
 extern int yyrestart(FILE *);
+
+int define_new_symb(const char *symb) {
+    if (symbtable_query_entry(symb)) return 0;
+    symbtable_add_entry(symb);
+    return 1;
+}
 
 void handle_ast_vardec(ast_node_t *ast_vardec) {
     forall_children(&(ast_vardec->tree_node), child) {
         ast_node_t *ast_child = tree2ast(child);
         if (ast_child->node_type == AST_NODE_ID) {
-            symbtable_add_entry(ast_child->attr.identifier_value);
+            const char *symb = ast_child->attr.identifier_value;
+            if (!define_new_symb(symb)) {
+                log_semantics_error_prologue("3", ast_child->lineno);
+                fprintf(stdout, "Redefined variable \"%s\".\n", symb);
+            }
         } else if (ast_child->node_type == AST_NODE_VarDec) {
             handle_ast_vardec(ast_child);
         }
@@ -48,14 +59,51 @@ void handle_ast_def(ast_node_t *ast_def) {
 }
 
 void handle_ast_exp(ast_node_t *ast_exp) {
-    // 目前只处理产生式Exp -> ID
-    ast_node_t *ast_first_child = tree2ast(ast_exp->tree_node.first_child);
-    if ((ast_exp->tree_node.first_child)->next_brother == NULL && ast_first_child->node_type == AST_NODE_ID) {
-        if (symbtable_query_entry(ast_first_child->attr.identifier_value)) {
-            /* do some type checking */
-        } else {
-            log_semantics_error_prologue("1", ast_first_child->lineno);
-            fprintf(stdout, "Undefined variable \"%s\".\n", ast_first_child->attr.identifier_value);
+    /*
+        检查最底层的标识符产生式
+        1. Exp -> ID
+        2. Exp -> ID LP RP
+        3. Exp -> ID LP Args RP
+    */
+    {
+        production_rec_t recs[1] = {
+            {NULL, AST_NODE_ID}
+        };
+        if (production_match(ast_exp, recs, 1)) {
+            const char *symb = recs[0].ast_node->attr.identifier_value;
+            if (!symbtable_query_entry(symb)) {
+                log_semantics_error_prologue("1", recs[0].ast_node->lineno);
+                fprintf(stdout, "Undefined variable \"%s\".\n", symb);
+            }
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_ID},
+            {NULL, AST_NODE_LP},
+            {NULL, AST_NODE_RP}
+        };
+        if (production_match(ast_exp, recs, 3)) {
+            const char *symb = recs[0].ast_node->attr.identifier_value;
+            if (!symbtable_query_entry(symb)) {
+                log_semantics_error_prologue("2", recs[0].ast_node->lineno);
+                fprintf(stdout, "Undefined function \"%s\".\n", symb);
+            }
+        }
+    }
+    {
+        production_rec_t recs[4] = {
+            {NULL, AST_NODE_ID},
+            {NULL, AST_NODE_LP},
+            {NULL, AST_NODE_Args},
+            {NULL, AST_NODE_RP}
+        };
+        if (production_match(ast_exp, recs, 4)) {
+            const char *symb = recs[0].ast_node->attr.identifier_value;
+            if (!symbtable_query_entry(symb)) {
+                log_semantics_error_prologue("2", recs[0].ast_node->lineno);
+                fprintf(stdout, "Undefined function \"%s\".\n", symb);
+            }
         }
     }
 }
