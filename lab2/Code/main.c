@@ -58,6 +58,63 @@ void handle_ast_def(ast_node_t *ast_def) {
     }
 }
 
+void handle_ast_paramdec(ast_node_t *ast_paramdec) {
+    forall_children(&(ast_paramdec->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_VarDec)
+            handle_ast_vardec(ast_child);
+    }
+}
+
+void handle_ast_varlist(ast_node_t *ast_varlist) {
+    forall_children(&(ast_varlist->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_ParamDec)
+            handle_ast_paramdec(ast_child);
+        if (ast_child->node_type == AST_NODE_VarList) {
+            handle_ast_varlist(ast_child);
+            break;
+        }
+    }
+}
+
+void handle_ast_fundec(ast_node_t *ast_fundec) {
+    forall_children(&(ast_fundec->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_ID) {
+            const char *symb = ast_child->attr.identifier_value;
+            if (!define_new_symb(symb)) {
+                log_semantics_error_prologue("4", ast_child->lineno);
+                fprintf(stdout, "Redefined function \"%s\".\n", symb);
+            }
+        }
+        if (ast_child->node_type == AST_NODE_VarList)
+            handle_ast_varlist(ast_child);
+    }
+}
+
+void handle_ast_extdeclist(ast_node_t *ast_extdeclist) {
+    forall_children(&(ast_extdeclist->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_ExtDecList) {
+            handle_ast_extdeclist(ast_child);
+            break;
+        } else if (ast_child->node_type == AST_NODE_VarDec)
+            handle_ast_vardec(ast_child);
+    }
+}
+
+void handle_ast_extdef(ast_node_t *ast_extdef) {
+    forall_children(&(ast_extdef->tree_node), child) {
+        ast_node_t *ast_child = tree2ast(child);
+        if (ast_child->node_type == AST_NODE_ExtDecList)
+            handle_ast_extdeclist(ast_child);
+        if (ast_child->node_type == AST_NODE_FunDec) {
+            handle_ast_fundec(ast_child);
+        }
+    }
+}
+
 void handle_ast_exp(ast_node_t *ast_exp) {
     /*
         检查最底层的标识符产生式
@@ -115,6 +172,9 @@ void handle_ast_node(ast_node_t *ast_node, int depth) {
         break;
     case AST_NODE_Exp:
         handle_ast_exp(ast_node);
+        break;
+    case AST_NODE_ExtDef:
+        handle_ast_extdef(ast_node);
         break;
     default:
         break;
