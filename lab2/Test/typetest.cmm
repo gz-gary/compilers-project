@@ -1,0 +1,23 @@
+int m1, m2[10];
+float m3[10], m4[100];
+struct gogo {
+    int n1;
+    float n2;
+} m5, m6;
+
+int main() {
+    struct A {
+        int a, b, c;
+        float p[10], q[5][2], r[4][5][6], s, t;
+        struct {
+            int aa, bb[3];
+        } gg, ss[4];
+        struct B {
+            int haha;
+            float mm[5];
+        } papa;
+    } test;
+    int n3, n4;
+    float n5, n6;
+    return 0;
+}
