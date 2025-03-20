@@ -3,6 +3,10 @@
 
 #include "tree.h"
 #define tree2ast(node) ((ast_node_t *)((void *)(node) - (void *)(&(((ast_node_t *)(0))->tree_node))))
+#define ast_1st_child(node) tree2ast((node)->tree_node.first_child)
+#define ast_2nd_child(node) tree2ast((node)->tree_node.first_child->next_brother)
+#define ast_3rd_child(node) tree2ast((node)->tree_node.first_child->next_brother->next_brother)
+#define ast_onlyone_child(node) (((node)->tree_node.first_child->next_brother) == NULL)
 
 const char *AST_NODE_TYPE_NAMES[48];
 
