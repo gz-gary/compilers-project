@@ -6,7 +6,7 @@
 static int check_fields_equality(struct_field_t *a, struct_field_t *b) {
     if (a == NULL) return b == NULL;
     if (b == NULL) return a == NULL;
-    return type_check_equality(a->type, b->type) && check_fields_equality(a->rest, b->rest);
+    return type_check_equality(a->type, b->type) && check_fields_equality(a->next_field, b->next_field);
 }
 
 int type_check_equality(type_t *a, type_t *b) {
@@ -17,9 +17,9 @@ int type_check_equality(type_t *a, type_t *b) {
     case PRIM_ARRAY:
         return type_check_equality(a->elem_type, b->elem_type);
     case PRIM_STRUCT:
-        return check_fields_equality(a->struct_field, b->struct_field);
+        return check_fields_equality(a->first_field, b->first_field);
     case PRIM_FUNC:
-        return 1; // TODO: check function equality
+        return 0; // we will never check func-type equality
     }
 }
 
@@ -47,7 +47,8 @@ type_t *type_new_array(type_t *elem_type) {
 type_t *type_new_struct() {
     type_t *type = malloc(sizeof(type_t));
     type->primitive = PRIM_STRUCT;
-    type->struct_field = NULL;
+    type->first_field = NULL;
+    type->last_field = NULL;
     return type;
 }
 
@@ -65,8 +66,13 @@ void type_add_struct_field(type_t *s, type_t *type, const char *name) {
     struct_field_t *field = malloc(sizeof(struct_field_t));
     field->type = type;
     field->name = name;
-    field->rest = s->struct_field;
-    s->struct_field = field;
+    if (s->first_field) {
+        s->last_field->next_field = field;
+        s->last_field = field;
+    } else {
+        s->first_field = field;
+        s->last_field = s->first_field;
+    }
 }
 
 void type_add_func_arg(type_t *f, type_t *type) {
@@ -103,12 +109,12 @@ void log_type(type_t *type) {
         break;
     case PRIM_STRUCT:
         printf("struct{");
-        struct_field_t *field = type->struct_field;
+        struct_field_t *field = type->first_field;
         while (field != NULL) {
             printf("%s: ", field->name);
             log_type(field->type);
             printf(" ");
-            field = field->rest;
+            field = field->next_field;
         }
         printf("}");
         break;

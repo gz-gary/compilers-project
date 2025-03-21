@@ -8,7 +8,7 @@ typedef struct type_t type_t;
 struct struct_field_t {
     type_t *type;
     const char *name;
-    struct_field_t *rest;
+    struct_field_t *next_field;
 };
 
 struct arglist_t {
@@ -23,7 +23,10 @@ struct type_t {
 
         type_t *elem_type;
 
-        struct_field_t *struct_field;
+        struct {
+            struct_field_t *first_field;
+            struct_field_t *last_field;
+        };
 
         struct {
             arglist_t *firstarg;
