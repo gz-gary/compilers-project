@@ -5,7 +5,7 @@
 #include "hashtable.h"
 #define hash2symb(entry) (symbtable_entry_t *)((void *)(entry) - (void *)(&(((symbtable_entry_t *)(0))->hashtable_entry)))
 
-enum symb_type_t { SYMB_VAR, SYMB_STRUCT, SYMB_FUNC };
+enum symb_type_t { SYMB_VAR, SYMB_STRUCT, SYMB_FIELD, SYMB_FUNC };
 struct symbtable_entry_t {
     const char *symb;
     enum symb_type_t symb_type;

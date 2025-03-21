@@ -9,7 +9,7 @@ void symbtable_add_entry(const char *symb, enum symb_type_t symb_type, type_t *t
     entry->symb_type = symb_type;
     entry->type = type;
     printf("%s -> ", symb);
-    printf("[%s] ", symb_type == SYMB_VAR ? "variable" : (symb_type == SYMB_STRUCT ? "struct" : "function"));
+    printf("[%s] ", symb_type == SYMB_VAR ? "variable" : (symb_type == SYMB_STRUCT ? "struct" : (symb_type == SYMB_FUNC ? "function" : "field")));
     log_type(type);
     printf("\n");
 
