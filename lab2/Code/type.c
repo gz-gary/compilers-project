@@ -51,6 +51,15 @@ type_t *type_new_struct() {
     return type;
 }
 
+type_t *type_new_func(type_t *return_type) {
+    type_t *type = malloc(sizeof(type_t));
+    type->primitive = PRIM_FUNC;
+    type->firstarg = NULL;
+    type->lastarg = NULL;
+    type->return_type = return_type;
+    return type;
+}
+
 void type_add_struct_field(type_t *s, type_t *type, const char *name) {
     assert(s->primitive == PRIM_STRUCT);
     struct_field_t *field = malloc(sizeof(struct_field_t));
@@ -58,6 +67,20 @@ void type_add_struct_field(type_t *s, type_t *type, const char *name) {
     field->name = name;
     field->rest = s->struct_field;
     s->struct_field = field;
+}
+
+void type_add_func_arg(type_t *f, type_t *type) {
+    assert(f->primitive == PRIM_FUNC);
+    arglist_t *newarg = malloc(sizeof(arglist_t));
+    newarg->type = type;
+    newarg->nextarg = NULL;
+    if (f->firstarg) {
+        f->lastarg->nextarg = newarg;
+        f->lastarg = newarg;
+    } else {
+        f->firstarg = newarg;
+        f->lastarg = f->firstarg;
+    }
 }
 
 type_t *type_new_invalid() {
@@ -90,6 +113,15 @@ void log_type(type_t *type) {
         printf("}");
         break;
     case PRIM_FUNC:
+        log_type(type->return_type);
+        printf("(");
+        arglist_t *arg = type->firstarg;
+        while (arg != NULL) {
+            log_type(arg->type);
+            printf(", ");
+            arg = arg->nextarg;
+        }
+        printf(")");
         break;
     }
 }

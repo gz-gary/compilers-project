@@ -13,7 +13,7 @@ struct struct_field_t {
 
 struct arglist_t {
     type_t *type;
-    arglist_t *rest;
+    arglist_t *nextarg;
 };
 
 struct type_t {
@@ -26,7 +26,8 @@ struct type_t {
         struct_field_t *struct_field;
 
         struct {
-            arglist_t *arglist;
+            arglist_t *firstarg;
+            arglist_t *lastarg;
             type_t *return_type;
         };
     };
@@ -41,7 +42,7 @@ type_t* type_new_struct();
 type_t* type_new_func(type_t *return_type);
 type_t* type_new_invalid();
 void type_add_struct_field(type_t *s, type_t *type, const char *name);
-void type_add_func_arg(type_t *f, type_t *type, const char *name);
+void type_add_func_arg(type_t *f, type_t *type);
 void log_type(type_t *type);
 
 #endif

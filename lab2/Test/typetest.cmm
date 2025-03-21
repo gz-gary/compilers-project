@@ -5,6 +5,15 @@ struct gogo {
     float n2;
 } m5, m6;
 
+int function1() {
+}
+
+struct gogo func(float param1[5][6], int param2, struct gogo param3, struct gogo param4[2]) {
+}
+
+int func1(int arg1, float arg2[3], float arg3[2][2], int arg4[6][6][6][6]) {
+}
+
 int main() {
     struct A {
         int a, b, c;
