@@ -1,6 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include "type.h"
 #include "tree.h"
 #define tree2ast(node) ((ast_node_t *)((void *)(node) - (void *)(&(((ast_node_t *)(0))->tree_node))))
 #define ast_1st_child(node) tree2ast((node)->tree_node.first_child)
@@ -64,6 +65,7 @@ enum ast_node_type_t {
 struct ast_node_t {
     enum ast_node_type_t node_type;
     int lineno; // line number
+    type_t *exp_type; // extension for type checking
     union {
         int int_value;
         float float_value;

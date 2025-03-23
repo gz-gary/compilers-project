@@ -7,59 +7,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
-type_t* handle_specifier(ast_node_t *specifier);
+static type_t* handle_specifier(ast_node_t *specifier);
 
-void handle_exp(ast_node_t *ast_exp) {
-    /*
-        检查最底层的标识符产生式
-        1. Exp -> ID
-        2. Exp -> ID LP RP
-        3. Exp -> ID LP Args RP
-    */
-    /*{
-        production_rec_t recs[1] = {
-            {NULL, AST_NODE_ID}
-        };
-        if (production_match(ast_exp, recs, 1)) {
-            const char *symb = recs[0].ast_node->attr.identifier_value;
-            if (!symbtable_query_entry(symb)) {
-                log_semantics_error_prologue("1", recs[0].ast_node->lineno);
-                fprintf(stdout, "Undefined variable \"%s\".\n", symb);
-            }
-        }
-    }
-    {
-        production_rec_t recs[3] = {
-            {NULL, AST_NODE_ID},
-            {NULL, AST_NODE_LP},
-            {NULL, AST_NODE_RP}
-        };
-        if (production_match(ast_exp, recs, 3)) {
-            const char *symb = recs[0].ast_node->attr.identifier_value;
-            if (!symbtable_query_entry(symb)) {
-                log_semantics_error_prologue("2", recs[0].ast_node->lineno);
-                fprintf(stdout, "Undefined function \"%s\".\n", symb);
-            }
-        }
-    }
-    {
-        production_rec_t recs[4] = {
-            {NULL, AST_NODE_ID},
-            {NULL, AST_NODE_LP},
-            {NULL, AST_NODE_Args},
-            {NULL, AST_NODE_RP}
-        };
-        if (production_match(ast_exp, recs, 4)) {
-            const char *symb = recs[0].ast_node->attr.identifier_value;
-            if (!symbtable_query_entry(symb)) {
-                log_semantics_error_prologue("2", recs[0].ast_node->lineno);
-                fprintf(stdout, "Undefined function \"%s\".\n", symb);
-            }
-        }
-    }*/
-}
-
-type_t *handle_vardec(type_t *specifier_type, ast_node_t *vardec, const char **name) {
+static type_t *handle_vardec(type_t *specifier_type, ast_node_t *vardec, const char **name) {
     ast_node_t *first_child = ast_1st_child(vardec);
     if (first_child->node_type == AST_NODE_ID) {
         *name = first_child->attr.identifier_value;
@@ -67,7 +17,7 @@ type_t *handle_vardec(type_t *specifier_type, ast_node_t *vardec, const char **n
     } else return handle_vardec(type_new_array(specifier_type), first_child, name);
 }
 
-void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
+static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
     while (!production_epsilon(deflist)) {
         ast_node_t *def = ast_1st_child(deflist);
         ast_node_t *rest = ast_2nd_child(deflist);
@@ -97,7 +47,7 @@ void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
     }
 }
 
-type_t* handle_specifier(ast_node_t *specifier) {
+static type_t* handle_specifier(ast_node_t *specifier) {
     ast_node_t *first_child = ast_1st_child(specifier);
     if (first_child->node_type == AST_NODE_TYPE) {
         /* case 1: basic type specifier */
@@ -154,12 +104,12 @@ type_t* handle_specifier(ast_node_t *specifier) {
     }
 }
 
-void handle_compst(ast_node_t *compst) {
+static void handle_compst(ast_node_t *compst) {
     ast_node_t *deflist = ast_2nd_child(compst);
     handle_deflist(deflist, NULL);
 }
 
-void handle_extdef(ast_node_t *extdef) {
+static void handle_extdef(ast_node_t *extdef) {
     ast_node_t *specifier = ast_1st_child(extdef);
     type_t *spec_type = handle_specifier(specifier);
     ast_node_t *tbd = ast_2nd_child(extdef);
@@ -225,16 +175,13 @@ void handle_extdef(ast_node_t *extdef) {
     }
 }
 
-void handle_node(ast_node_t *ast_node, int depth) {
+static void handle_node(ast_node_t *ast_node, int depth) {
     switch (ast_node->node_type) {
     /* case AST_NODE_Def: */
     /* 不直接处理Def而是在Toplevel处理: CompSt/ExtDef */
     case AST_NODE_CompSt:
         handle_compst(ast_node);
         break;
-    //case AST_NODE_Exp:
-        //handle_exp(ast_node);
-        //break;
     case AST_NODE_ExtDef:
         handle_extdef(ast_node);
         break;
@@ -243,9 +190,145 @@ void handle_node(ast_node_t *ast_node, int depth) {
     }
 }
 
+static void handle_exp(ast_node_t *exp) {
+    /*
+        最底层, 无需递归的几个产生式
+        1. Exp -> ID
+        2. Exp -> ID LP RP
+        3. Exp -> INT
+        4. Exp -> FLOAT
+    */
+    {
+        production_rec_t recs[1] = {
+            {NULL, AST_NODE_ID}
+        };
+        if (production_match(exp, recs, 1)) {
+            const char *symb = recs[0].ast_node->attr.identifier_value;
+            symbtable_entry_t *entry = symbtable_query_entry(symb);
+            if (!entry) {
+                log_semantics_error_prologue("1", recs[0].ast_node->lineno);
+                fprintf(stdout, "Undefined variable \"%s\".\n", symb);
+                goto handle_exp_failed;
+            }
+            if (entry->symb_type != SYMB_VAR) {
+                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                fprintf(stdout, "Not a variable \"%s\".\n", symb);
+                goto handle_exp_failed;
+            }
+            exp->exp_type = entry->type;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_ID},
+            {NULL, AST_NODE_LP},
+            {NULL, AST_NODE_RP}
+        };
+        if (production_match(exp, recs, 3)) {
+            const char *symb = recs[0].ast_node->attr.identifier_value;
+            symbtable_entry_t *entry = symbtable_query_entry(symb);
+            if (!entry) {
+                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                fprintf(stdout, "Undefined function \"%s\".\n", symb);
+                goto handle_exp_failed;
+            }
+            if (entry->symb_type != SYMB_FUNC) {
+                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                fprintf(stdout, "Not a function \"%s\".\n", symb);
+                goto handle_exp_failed;
+            }
+            if (!type_func_noarg(entry->type)) {
+                log_semantics_error_prologue("9", recs[0].ast_node->lineno);
+                fprintf(stdout, "Arglist not matched \"%s\".\n", symb);
+                goto handle_exp_failed;
+            }
+            exp->exp_type = entry->type->return_type;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[1] = {
+            {NULL, AST_NODE_INT}
+        };
+        if (production_match(exp, recs, 1)) {
+            exp->exp_type = type_new_basic_int();
+            return;
+        }
+    }
+    {
+        production_rec_t recs[1] = {
+            {NULL, AST_NODE_FLOAT}
+        };
+        if (production_match(exp, recs, 1)) {
+            exp->exp_type = type_new_basic_float();
+            return;
+        }
+    }
+    /* 需要递归的部分 */
+    {
+        production_rec_t recs[4] = {
+            {NULL, AST_NODE_ID},
+            {NULL, AST_NODE_LP},
+            {NULL, AST_NODE_Args},
+            {NULL, AST_NODE_RP}
+        };
+        if (production_match(exp, recs, 4)) {
+            const char *symb = recs[0].ast_node->attr.identifier_value;
+            symbtable_entry_t *entry = symbtable_query_entry(symb);
+            if (!entry) {
+                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                fprintf(stdout, "Undefined function \"%s\".\n", symb);
+                goto handle_exp_failed;
+            }
+            if (entry->symb_type != SYMB_FUNC) {
+                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                fprintf(stdout, "Not a function \"%s\".\n", symb);
+                goto handle_exp_failed;
+            }
+            arglist_t *arglist = entry->type->firstarg;
+            ast_node_t *args = recs[2].ast_node;
+
+            while (1) {
+                ast_node_t *arg = ast_1st_child(args);
+                type_t *arg_type = arg->exp_type;
+
+                if (arglist == NULL) goto arglist_not_matched;
+                if (!type_check_equality(arg_type, arglist->type)) {
+                    if (arg_type->primitive == PRIM_INVALID) goto handle_exp_failed;
+                    goto arglist_not_matched;
+                }
+
+                arglist = arglist->nextarg;
+                if (ast_onlyone_child(args)) break;
+                ast_node_t *rest = ast_3rd_child(args);
+                args = rest;
+            }
+            if (arglist != NULL) goto arglist_not_matched;
+
+            exp->exp_type = entry->type->return_type;
+            return;
+
+            arglist_not_matched:
+                log_semantics_error_prologue("9", recs[0].ast_node->lineno);
+                fprintf(stdout, "Arglist not matched \"%s\".\n", symb);
+                goto handle_exp_failed;
+        }
+    }
+
+handle_exp_failed:
+    exp->exp_type = type_new_invalid();
+    return;
+}
+
+static void handle_node_for_type_checking(ast_node_t *ast_node, int depth) {
+    if (ast_node->node_type == AST_NODE_Exp) handle_exp(ast_node);
+}
+
 void semantics_check() {
     /* definition checking */
     ast_walk(handle_node, ast_walk_action_nop);
     /* type checking */
-    // ast_walk(..., ...);
+    /* 后序遍历, 自下而上为每个exp确定type */
+    ast_walk(ast_walk_action_nop, handle_node_for_type_checking);
 }

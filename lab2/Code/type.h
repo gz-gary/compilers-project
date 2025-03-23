@@ -1,6 +1,8 @@
 #ifndef TYPE_H
 #define TYPE_H
 
+#define type_func_noarg(func) (((func)->firstarg) == NULL)
+
 typedef struct struct_field_t struct_field_t;
 typedef struct arglist_t arglist_t;
 typedef struct type_t type_t;
@@ -36,7 +38,6 @@ struct type_t {
     };
 };
 
-int type_check_arglist_equality(arglist_t *a, arglist_t *b);
 int type_check_equality(type_t *a, type_t *b);
 type_t* type_new_basic_int();
 type_t* type_new_basic_float();

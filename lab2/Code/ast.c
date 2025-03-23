@@ -66,6 +66,7 @@ ast_node_t *ast_new_node(enum ast_node_type_t node_type)
     tree_init_node(&(new_node->tree_node));
     new_node->node_type = node_type;
     new_node->lineno = yylineno;
+    new_node->exp_type = NULL;
     return new_node;
 }
 
