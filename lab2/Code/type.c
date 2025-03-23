@@ -1,5 +1,6 @@
 #include "type.h"
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 #include <stdlib.h>
 
@@ -9,7 +10,17 @@ static int check_fields_equality(struct_field_t *a, struct_field_t *b) {
     return type_check_equality(a->type, b->type) && check_fields_equality(a->next_field, b->next_field);
 }
 
-int type_check_equality(type_t *a, type_t *b) {
+int type_query_struct_field(type_t *struct_type, const char *field_name) {
+    struct_field_t *field = struct_type->first_field;
+    while (field != NULL) {
+        if (!strcmp(field->name, field_name)) return field->type;
+        field = field->next_field;
+    }
+    return NULL;
+}
+
+int type_check_equality(type_t *a, type_t *b)
+{
     if (a->primitive != b->primitive) return 0;
     switch (a->primitive) {
     case PRIM_BASIC:

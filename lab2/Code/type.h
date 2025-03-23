@@ -38,6 +38,7 @@ struct type_t {
     };
 };
 
+type_t* type_query_struct_field(type_t *struct_type, const char *field_name);
 int type_check_equality(type_t *a, type_t *b);
 type_t* type_new_basic_int();
 type_t* type_new_basic_float();
