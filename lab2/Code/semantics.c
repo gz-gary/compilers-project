@@ -26,7 +26,6 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
         /*
             Def -> Specifier DecList SEMI
         */
-        // 以下内容等价handle_def(ast_node_t *def, type_t *upper_struct);
         ast_node_t *def_spec = ast_1st_child(def);
         ast_node_t *declist = ast_2nd_child(def);
         type_t *spec_type = handle_specifier(def_spec);
@@ -323,7 +322,7 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             exp->exp_type = entry->type;
-            exp->attr.identifier_value = symb;
+            // exp->attr.identifier_value = symb;
             return;
         }
     }
@@ -352,7 +351,7 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             exp->exp_type = entry->type->return_type;
-            exp->attr.identifier_value = symb;
+            // exp->attr.identifier_value = symb;
             return;
         }
     }
@@ -372,7 +371,7 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 1)) {
             exp->exp_type = type_new_basic_float();
-            exp->attr.float_value = recs[0].ast_node->attr.float_value;
+            // exp->attr.float_value = recs[0].ast_node->attr.float_value;
             return;
         }
     }
@@ -444,9 +443,24 @@ static void handle_exp(ast_node_t *exp) {
             }
             if (!type_check_int(exp1->exp_type)) {
                 log_semantics_error_prologue("7", exp1->lineno);
-                const char *exp1_name = exp1->attr.identifier_value;
-                // todo: 或许加上具体报错？但是这里输出是空指针？Exp设置一下可以不是空指针，但是这里也不知道它是int还是float还是直接的id
-                fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
+                if (exp1->attr.identifier_value != NULL) {
+                    switch (exp1->node_type)
+                    {
+                    // 或许可以实现更具体的报错
+                    // case AST_NODE_ID:
+                    //     fprintf(stdout, "\"%s &&\" not boolean.\n", exp1->attr.identifier_value);
+                    //     break;
+                    // case AST_NODE_FLOAT:
+                    //     fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
+                    //     break;
+                    default:
+                        // fprintf(stdout, "ast node type:%d\t", exp1->node_type);
+                        fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
+                        break;
+                    }
+                } else {
+                    fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
+                }
                 goto handle_exp_failed;
             }
             if (!type_check_int(exp2->exp_type)) {
@@ -633,7 +647,6 @@ static void handle_exp(ast_node_t *exp) {
             {NULL, AST_NODE_Exp},
             {NULL, AST_NODE_RB}
         };
-        // 前面的Exp是array, 后面的Exp是int
         if (production_match(exp, recs, 4)) {
             ast_node_t *exp1 = recs[0].ast_node;
             ast_node_t *exp2 = recs[2].ast_node;
@@ -660,7 +673,6 @@ static void handle_exp(ast_node_t *exp) {
             {NULL, AST_NODE_DOT},
             {NULL, AST_NODE_ID}
         };
-        // 前面的Exp是struct, 后面的ID是field
         if (production_match(exp, recs, 3)) {
             ast_node_t *exp1 = recs[0].ast_node;
             const char *field_name = recs[2].ast_node->attr.identifier_value;

@@ -45,7 +45,8 @@ int main() {
     func(m10, n3, func(m10, n3, m5, m6), m6);
 
     m123 = 2;
-    hello[1] = 1.1 && 2 && m1;
+    hello[1] = hello && hello2 && m1;
+    1.1 && 2;
     2 || 1.1;
     hello+1;
     1-hello;
