@@ -432,6 +432,27 @@ static void handle_exp(ast_node_t *exp) {
     {
         production_rec_t recs[3] = {
             {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_ASSIGNOP},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+                log_semantics_error_prologue("5", exp1->lineno);
+                fprintf(stdout, "Incompatible type about \"=\".\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = exp1->exp_type;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
             {NULL, AST_NODE_AND},
             {NULL, AST_NODE_Exp}
         };
@@ -612,7 +633,8 @@ static void handle_exp(ast_node_t *exp) {
             if (exp1->exp_type->primitive == PRIM_INVALID) {
                 goto handle_exp_failed;
             }
-            if (exp1->exp_type->primitive != PRIM_BASIC || exp1->exp_type->basic != PRIM_BASIC_INT || exp1->exp_type->primitive != PRIM_BASIC_FLOAT) {
+            if (exp1->exp_type->primitive != PRIM_BASIC) {
+                fprintf(stdout, "%d\n", exp1->exp_type->primitive);
                 log_semantics_error_prologue("7", exp1->lineno);
                 fprintf(stdout, "Expression can't be negative.\n");
                 goto handle_exp_failed;
