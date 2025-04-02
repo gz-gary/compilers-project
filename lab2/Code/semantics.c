@@ -9,6 +9,8 @@
 
 static type_t* handle_specifier(ast_node_t *specifier);
 
+static void handle_compst(ast_node_t *compst);
+
 static type_t *handle_vardec(type_t *specifier_type, ast_node_t *vardec, const char **name) {
     ast_node_t *first_child = ast_1st_child(vardec);
     if (first_child->node_type == AST_NODE_ID) {
@@ -21,16 +23,26 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
     while (!production_epsilon(deflist)) {
         ast_node_t *def = ast_1st_child(deflist);
         ast_node_t *rest = ast_2nd_child(deflist);
-
+        /*
+            Def -> Specifier DecList SEMI
+        */
+        // 以下内容等价handle_def(ast_node_t *def, type_t *upper_struct);
         ast_node_t *def_spec = ast_1st_child(def);
         ast_node_t *declist = ast_2nd_child(def);
         type_t *spec_type = handle_specifier(def_spec);
         while (1) {
+            /*
+                DecList -> Dec
+                | Dec COMMA DecList
+                Dec -> VarDec
+                | VarDec ASSIGNOP Exp
+            */
             ast_node_t *dec = ast_1st_child(declist);
             ast_node_t *vardec = ast_1st_child(dec);
 
             const char *name;
             type_t *type = handle_vardec(spec_type, vardec, &name);
+            // redefine check
             if (symbtable_query_entry(name)) {
                 log_semantics_error_prologue("15", vardec->lineno);
                 fprintf(stdout, "Redefined %s \"%s\".\n", upper_struct == NULL ? "variable" : "field", name);
@@ -44,6 +56,83 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
         }
 
         deflist = rest;
+    }
+}
+
+static void handle_stmt(ast_node_t *stmt) {
+    /*
+        Stmt -> Exp SEMI
+        | CompSt
+        | RETURN Exp SEMI
+        | IF LP Exp RP Stmt (记得处理优先级)
+        | IF LP Exp RP Stmt ELSE Stmt
+        | WHILE LP Exp RP Stmt
+    */
+    ast_node_t *tbd = ast_1st_child(stmt);
+    switch (tbd->node_type) {
+    case AST_NODE_CompSt:
+        handle_compst(tbd);
+        break;
+    case AST_NODE_IF:
+        {
+            {
+                production_rec_t recs[5] = {
+                    {NULL, AST_NODE_IF},
+                    {NULL, AST_NODE_LP},
+                    {NULL, AST_NODE_Exp},
+                    {NULL, AST_NODE_RP},
+                    {NULL, AST_NODE_Stmt}
+                };
+                if (production_match(stmt, recs, 5)) {
+                    ast_node_t *stmt_ = recs[4].ast_node;
+                    handle_stmt(stmt_);
+                }
+            }
+            {
+                production_rec_t recs[7] = {
+                    {NULL, AST_NODE_IF},
+                    {NULL, AST_NODE_LP},
+                    {NULL, AST_NODE_Exp},
+                    {NULL, AST_NODE_RP},
+                    {NULL, AST_NODE_Stmt},
+                    {NULL, AST_NODE_ELSE},
+                    {NULL, AST_NODE_Stmt}
+                };
+                if (production_match(stmt, recs, 7)) {
+                    ast_node_t *stmt_ = recs[6].ast_node;
+                    handle_stmt(stmt_);
+                }
+            }
+        }
+        break;
+    case AST_NODE_WHILE:
+        {
+            production_rec_t recs[5] = {
+                {NULL, AST_NODE_WHILE},
+                {NULL, AST_NODE_LP},
+                {NULL, AST_NODE_Exp},
+                {NULL, AST_NODE_RP},
+                {NULL, AST_NODE_Stmt}
+            };
+            if (production_match(stmt, recs, 5)) {
+                ast_node_t *stmt_ = recs[4].ast_node;
+                handle_stmt(stmt_);
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+static void handle_stmtlist(ast_node_t *stmtlist) {
+    while (!production_epsilon(stmtlist)) {
+        ast_node_t *stmt = ast_1st_child(stmtlist);
+        ast_node_t *rest = ast_2nd_child(stmtlist);
+
+        handle_stmt(stmt);
+
+        stmtlist = rest;
     }
 }
 
@@ -105,8 +194,11 @@ static type_t* handle_specifier(ast_node_t *specifier) {
 }
 
 static void handle_compst(ast_node_t *compst) {
-    ast_node_t *deflist = ast_2nd_child(compst);
+    ast_node_t *deflist = ast_2nd_child(compst); 
     handle_deflist(deflist, NULL);
+    // 好像这个并没有哪里需要报错）
+    // ast_node_t *stmtlist = ast_3rd_child(compst);
+    // handle_stmtlist(stmtlist);
 }
 
 static void handle_extdef(ast_node_t *extdef) {
@@ -114,6 +206,11 @@ static void handle_extdef(ast_node_t *extdef) {
     type_t *spec_type = handle_specifier(specifier);
     ast_node_t *tbd = ast_2nd_child(extdef);
     switch (tbd->node_type) {
+    /*
+        ExtDef -> Specifier ExtDecList SEMI
+        | Specifier FunDec CompSt 
+        | Specifier SEMI
+    */
     case AST_NODE_ExtDecList:
         {
             ast_node_t *extdeclist = tbd;
@@ -121,12 +218,15 @@ static void handle_extdef(ast_node_t *extdef) {
                 ast_node_t *vardec = ast_1st_child(extdeclist);
                 const char *name;
                 type_t *type = handle_vardec(spec_type, vardec, &name);
-
+                // redefine check
                 if (symbtable_query_entry(name)) {
                     log_semantics_error_prologue("3", vardec->lineno);
                     fprintf(stdout, "Redefined variable \"%s\".\n", name);
                 } else symbtable_add_entry(name, SYMB_VAR, type);
-
+                /*
+                    ExtDecList -> VarDec
+                    | ExtDecList COMMA ExtDecList
+                */
                 if (ast_onlyone_child(extdeclist)) break;
                 extdeclist = ast_3rd_child(extdeclist);
             }
@@ -139,6 +239,10 @@ static void handle_extdef(ast_node_t *extdef) {
             ast_node_t *tbd_ = ast_3rd_child(fundec);
             const char *name = id->attr.identifier_value;
             type_t *func_type = type_new_func(spec_type);
+            /*
+                FunDec -> ID LP VarList RP
+                | ID LP RP
+            */
             if (tbd_->node_type == AST_NODE_VarList) {
                 ast_node_t *varlist = tbd_;
                 while (1) {
@@ -157,7 +261,10 @@ static void handle_extdef(ast_node_t *extdef) {
                         symbtable_add_entry(param_name, SYMB_VAR, param_type);
                         type_add_func_arg(func_type, param_type);
                     }
-                    
+                    /*
+                        Varlist -> ParamDec COMMA VarList
+                        | ParamDec
+                    */
                     if (ast_onlyone_child(varlist)) break;
                     ast_node_t *rest = ast_3rd_child(varlist);
                     varlist = rest;
@@ -216,6 +323,7 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             exp->exp_type = entry->type;
+            exp->attr.identifier_value = symb;
             return;
         }
     }
@@ -244,6 +352,7 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             exp->exp_type = entry->type->return_type;
+            exp->attr.identifier_value = symb;
             return;
         }
     }
@@ -253,6 +362,7 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 1)) {
             exp->exp_type = type_new_basic_int();
+            exp->attr.int_value = recs[0].ast_node->attr.int_value;
             return;
         }
     }
@@ -262,6 +372,7 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 1)) {
             exp->exp_type = type_new_basic_float();
+            exp->attr.float_value = recs[0].ast_node->attr.float_value;
             return;
         }
     }
@@ -286,6 +397,10 @@ static void handle_exp(ast_node_t *exp) {
                 fprintf(stdout, "Not a function \"%s\".\n", symb);
                 goto handle_exp_failed;
             }
+            /*
+                Args -> Exp COMMA Args
+                | Exp
+            */
             arglist_t *arglist = entry->type->firstarg;
             ast_node_t *args = recs[2].ast_node;
 
@@ -315,6 +430,260 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
         }
     }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_AND},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_int(exp1->exp_type)) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                const char *exp1_name = exp1->attr.identifier_value;
+                // todo: 或许加上具体报错？但是这里输出是空指针？Exp设置一下可以不是空指针，但是这里也不知道它是int还是float还是直接的id
+                fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
+                goto handle_exp_failed;
+            }
+            if (!type_check_int(exp2->exp_type)) {
+                log_semantics_error_prologue("7", exp2->lineno);
+                fprintf(stdout, "Right expression on the \"&&\" not boolean.\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = type_new_basic_int();
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_OR},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_int(exp1->exp_type)) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                const char *op = recs[1].ast_node->attr.identifier_value;
+                fprintf(stdout, "Left expression on the \"||\" not boolean.\n");
+                goto handle_exp_failed;
+            }
+            if (!type_check_int(exp2->exp_type)) {
+                log_semantics_error_prologue("7", exp2->lineno);
+                fprintf(stdout, "Right expressionon the \"||\" not boolean.\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = type_new_basic_int();
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_RELOP},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                fprintf(stdout, "Incompatible type about relop.\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = type_new_basic_int();
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_PLUS},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                fprintf(stdout, "Incompatible type about \"+\".\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = exp1->exp_type;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_MINUS},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                fprintf(stdout, "Incompatible type about \"-\".\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = exp1->exp_type;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_STAR},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                fprintf(stdout, "Incompatible type about \"*\".\n");
+                goto handle_exp_failed;
+            }
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_DIV},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                fprintf(stdout, "Incompatible type about \"/\".\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = exp1->exp_type;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[2] = {
+            {NULL, AST_NODE_MINUS},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 2)) {
+            ast_node_t *exp1 = recs[1].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (exp1->exp_type->primitive != PRIM_BASIC || exp1->exp_type->basic != PRIM_BASIC_INT || exp1->exp_type->primitive != PRIM_BASIC_FLOAT) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                fprintf(stdout, "Expression can't be negative.\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = type_new_basic_int();
+            return;
+        }
+    }
+    {
+        production_rec_t recs[2] = {
+            {NULL, AST_NODE_NOT},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 2)) {
+            ast_node_t *exp1 = recs[1].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (!type_check_int(exp1->exp_type)) {
+                log_semantics_error_prologue("7", exp1->lineno);
+                fprintf(stdout, "Right expression on the \"!\" not boolean.\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = type_new_basic_int();
+            return;
+        }
+    }
+    {
+        production_rec_t recs[4] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_LB},
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_RB}
+        };
+        // 前面的Exp是array, 后面的Exp是int
+        if (production_match(exp, recs, 4)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            ast_node_t *exp2 = recs[2].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (exp1->exp_type->primitive != PRIM_ARRAY) {
+                log_semantics_error_prologue("10", exp1->lineno);
+                fprintf(stdout, "Not an array.\n");
+                goto handle_exp_failed;
+            }
+            if (!type_check_int(exp2->exp_type)) {
+                log_semantics_error_prologue("12", exp2->lineno);
+                fprintf(stdout, "Not an integer\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = exp1->exp_type->elem_type;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_DOT},
+            {NULL, AST_NODE_ID}
+        };
+        // 前面的Exp是struct, 后面的ID是field
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[0].ast_node;
+            const char *field_name = recs[2].ast_node->attr.identifier_value;
+            if (exp1->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (exp1->exp_type->primitive != PRIM_STRUCT) {
+                log_semantics_error_prologue("13", exp1->lineno);
+                fprintf(stdout, "Not a struct.\n");
+                goto handle_exp_failed;
+            }
+            type_t *field_type = type_query_struct_field(exp1->exp_type, field_name);
+            if (!field_type) {
+                log_semantics_error_prologue("14", exp1->lineno);
+                fprintf(stdout, "No such field \"%s\".\n", field_name);
+                goto handle_exp_failed;
+            }
+            exp->exp_type = field_type;
+            return;
+        }
+    }
+    
+    
 
 handle_exp_failed:
     exp->exp_type = type_new_invalid();

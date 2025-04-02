@@ -35,6 +35,10 @@ int type_check_equality(type_t *a, type_t *b)
     }
 }
 
+int type_check_int(type_t *a) {
+    return a->primitive == PRIM_BASIC && a->basic == PRIM_BASIC_INT;
+}
+
 type_t *type_new_basic_int() {
     type_t *type = malloc(sizeof(type_t));
     type->primitive = PRIM_BASIC;

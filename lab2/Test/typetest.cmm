@@ -1,4 +1,5 @@
 int m1, m2[10], m666[2][2][2][2];
+int hello[123];
 float m3[10], m4[100], m10[2][2];
 struct gogo {
     int n1;
@@ -28,6 +29,7 @@ int main() {
     } test;
     int n3, n4;
     float n5, n6;
+    int hello2[123];
     function1(n4);
     func();
     func1(n3, m4, m10, m1);
@@ -41,5 +43,23 @@ int main() {
     func1(1.25, m4, m10, m666);
     func1(function1(), m4, m10, m666);
     func(m10, n3, func(m10, n3, m5, m6), m6);
+
+    m123 = 2;
+    hello[1] = 1.1 && 2 && m1;
+    2 || 1.1;
+    hello+1;
+    1-hello;
+    hello*1;
+    hello/1;
+    !hello;
+
+    m1[1] = 2;
+    hello[1.1] = 2;
+    hello[2] = 3;
+    -----------hello;
+    
+    test.p[1] = 3;
+    test.ppppp = 3;
+    
     return 0;
 }
