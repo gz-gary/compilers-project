@@ -718,11 +718,8 @@ invalid_fundec:
 }
 
 void semantics_check() {
-    /* definition checking */
-    ast_walk(handle_node, ast_walk_action_nop);
-    /* type checking */
-    /* 后序遍历, 自下而上为每个exp确定type */
-    ast_walk(ast_walk_action_nop, handle_node_for_type_checking);
+    /* definition checking and type checking */
+    ast_walk(handle_node, handle_node_for_type_checking);
     /* return type checking */
     ast_walk(handle_node_for_return_checking, ast_walk_action_nop);
 }
