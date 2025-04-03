@@ -322,7 +322,6 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             exp->exp_type = entry->type;
-            // exp->attr.identifier_value = symb;
             return;
         }
     }
@@ -351,7 +350,6 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             exp->exp_type = entry->type->return_type;
-            // exp->attr.identifier_value = symb;
             return;
         }
     }
@@ -361,7 +359,6 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 1)) {
             exp->exp_type = type_new_basic_int();
-            exp->attr.int_value = recs[0].ast_node->attr.int_value;
             return;
         }
     }
@@ -371,7 +368,6 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 1)) {
             exp->exp_type = type_new_basic_float();
-            // exp->attr.float_value = recs[0].ast_node->attr.float_value;
             return;
         }
     }
