@@ -450,7 +450,7 @@ static void handle_exp(ast_node_t *exp) {
             if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
                 goto handle_exp_failed;
             }
-            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type) || !(exp1->exp_type->primitive == PRIM_BASIC)) {
                 log_semantics_error_prologue("7", exp1->lineno);
                 fprintf(stdout, "Incompatible type about relop.\n");
                 goto handle_exp_failed;
@@ -471,7 +471,7 @@ static void handle_exp(ast_node_t *exp) {
             if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
                 goto handle_exp_failed;
             }
-            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type) || !(exp1->exp_type->primitive == PRIM_BASIC)) {
                 log_semantics_error_prologue("7", exp1->lineno);
                 fprintf(stdout, "Incompatible type about \"+\".\n");
                 goto handle_exp_failed;
@@ -492,7 +492,7 @@ static void handle_exp(ast_node_t *exp) {
             if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
                 goto handle_exp_failed;
             }
-            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type) || !(exp1->exp_type->primitive == PRIM_BASIC)) {
                 log_semantics_error_prologue("7", exp1->lineno);
                 fprintf(stdout, "Incompatible type about \"-\".\n");
                 goto handle_exp_failed;
@@ -513,7 +513,7 @@ static void handle_exp(ast_node_t *exp) {
             if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
                 goto handle_exp_failed;
             }
-            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type) || !(exp1->exp_type->primitive == PRIM_BASIC)) {
                 log_semantics_error_prologue("7", exp1->lineno);
                 fprintf(stdout, "Incompatible type about \"*\".\n");
                 goto handle_exp_failed;
@@ -534,9 +534,24 @@ static void handle_exp(ast_node_t *exp) {
             if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
                 goto handle_exp_failed;
             }
-            if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
+            if (!type_check_equality(exp1->exp_type, exp2->exp_type) || !(exp1->exp_type->primitive == PRIM_BASIC)) {
                 log_semantics_error_prologue("7", exp1->lineno);
                 fprintf(stdout, "Incompatible type about \"/\".\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = exp1->exp_type;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_LP},
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_RP}
+        };
+        if (production_match(exp, recs, 3)) {
+            ast_node_t *exp1 = recs[1].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID) {
                 goto handle_exp_failed;
             }
             exp->exp_type = exp1->exp_type;
@@ -557,6 +572,26 @@ static void handle_exp(ast_node_t *exp) {
                 fprintf(stdout, "%d\n", exp1->exp_type->primitive);
                 log_semantics_error_prologue("7", exp1->lineno);
                 fprintf(stdout, "Expression can't be negative.\n");
+                goto handle_exp_failed;
+            }
+            exp->exp_type = type_new_basic_int();
+            return;
+        }
+    }
+    {
+        production_rec_t recs[2] = {
+            {NULL, AST_NODE_PLUS},
+            {NULL, AST_NODE_Exp}
+        };
+        if (production_match(exp, recs, 2)) {
+            ast_node_t *exp1 = recs[1].ast_node;
+            if (exp1->exp_type->primitive == PRIM_INVALID) {
+                goto handle_exp_failed;
+            }
+            if (exp1->exp_type->primitive != PRIM_BASIC) {
+                fprintf(stdout, "%d\n", exp1->exp_type->primitive);
+                log_semantics_error_prologue("7", exp1->lineno);
+                fprintf(stdout, "Expression can't be positive.\n");
                 goto handle_exp_failed;
             }
             exp->exp_type = type_new_basic_int();
