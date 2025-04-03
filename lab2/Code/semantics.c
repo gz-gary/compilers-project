@@ -503,7 +503,6 @@ static void handle_exp(ast_node_t *exp) {
             }
             if (!type_check_int(exp1->exp_type)) {
                 log_semantics_error_prologue("7", exp1->lineno);
-                const char *op = recs[1].ast_node->attr.identifier_value;
                 fprintf(stdout, "Left expression on the \"||\" not boolean.\n");
                 goto handle_exp_failed;
             }
@@ -596,6 +595,8 @@ static void handle_exp(ast_node_t *exp) {
                 fprintf(stdout, "Incompatible type about \"*\".\n");
                 goto handle_exp_failed;
             }
+            exp->exp_type = exp1->exp_type;
+            return;
         }
     }
     {
