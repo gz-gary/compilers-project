@@ -43,11 +43,17 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
             type_t *type = handle_vardec(spec_type, vardec, &name);
             // redefine check
             if (symbtable_query_entry(name)) {
-                log_semantics_error_prologue("15", vardec->lineno);
+                log_semantics_error_prologue(upper_struct == NULL ? "3" : "15", vardec->lineno);
                 fprintf(stdout, "Redefined %s \"%s\".\n", upper_struct == NULL ? "variable" : "field", name);
             } else symbtable_add_entry(name, upper_struct == NULL ? SYMB_VAR : SYMB_FIELD, type);
-            if (upper_struct)
+            if (upper_struct) {
+                if (!ast_onlyone_child(dec)) {
+                    /* try to initialize fields */
+                    log_semantics_error_prologue("15", vardec->lineno);
+                    fprintf(stdout, "Try to initialize fields \"%s\".\n", name);
+                }
                 type_add_struct_field(upper_struct, type, name);
+            }
             
             if (ast_onlyone_child(declist)) break;
             ast_node_t *rest = ast_3rd_child(declist);
@@ -193,7 +199,7 @@ static void handle_extdef(ast_node_t *extdef) {
                 }
             }
             if (symbtable_query_entry(name)) {
-                log_semantics_error_prologue("3", id->lineno);
+                log_semantics_error_prologue("4", id->lineno);
                 fprintf(stdout, "Redefined function \"%s\".\n", name);
             } else symbtable_add_entry(name, SYMB_FUNC, func_type);
 
