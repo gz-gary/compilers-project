@@ -688,10 +688,41 @@ static void handle_node_for_type_checking(ast_node_t *ast_node, int depth) {
     if (ast_node->node_type == AST_NODE_Exp) handle_exp(ast_node);
 }
 
+static type_t *current_return_type = NULL;
+static void handle_node_for_return_checking(ast_node_t *ast_node, int depth) {
+    if (ast_node->node_type == AST_NODE_FunDec) {
+        ast_node_t *id = ast_1st_child(ast_node);
+        symbtable_entry_t *entry = symbtable_query_entry(id->attr.identifier_value);
+        if (!entry) goto invalid_fundec;
+        if (entry->symb_type != SYMB_FUNC) goto invalid_fundec;
+        current_return_type = entry->type->return_type;
+        return;
+
+invalid_fundec:
+        current_return_type = NULL;
+        return;
+    }
+    if (ast_node->node_type == AST_NODE_Stmt) {
+        ast_node_t *ret = ast_1st_child(ast_node);
+        if (ret->node_type == AST_NODE_RETURN) {
+            if (current_return_type == NULL) return;
+            type_t *return_type = ast_2nd_child(ast_node)->exp_type;
+            if (return_type->primitive == PRIM_INVALID) return;
+            if (!type_check_equality(return_type, current_return_type)) {
+                log_semantics_error_prologue("8", ret->lineno);
+                fprintf(stdout, "Return type does not match with function declaration.\n");
+            }
+            return;
+        }
+    }
+}
+
 void semantics_check() {
     /* definition checking */
     ast_walk(handle_node, ast_walk_action_nop);
     /* type checking */
     /* 后序遍历, 自下而上为每个exp确定type */
     ast_walk(ast_walk_action_nop, handle_node_for_type_checking);
+    /* return type checking */
+    ast_walk(handle_node_for_return_checking, ast_walk_action_nop);
 }
