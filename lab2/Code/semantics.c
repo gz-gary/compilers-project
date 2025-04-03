@@ -124,9 +124,6 @@ static type_t* handle_specifier(ast_node_t *specifier) {
 static void handle_compst(ast_node_t *compst) {
     ast_node_t *deflist = ast_2nd_child(compst); 
     handle_deflist(deflist, NULL);
-    // 好像这个并没有哪里需要报错）
-    // ast_node_t *stmtlist = ast_3rd_child(compst);
-    // handle_stmtlist(stmtlist);
 }
 
 static void handle_extdef(ast_node_t *extdef) {
@@ -712,6 +709,7 @@ invalid_fundec:
             if (current_return_type == NULL) return;
             type_t *return_type = ast_2nd_child(ast_node)->exp_type;
             if (return_type->primitive == PRIM_INVALID) return;
+            if (current_return_type->primitive == PRIM_INVALID) return;
             if (!type_check_equality(return_type, current_return_type)) {
                 log_semantics_error_prologue("8", ret->lineno);
                 fprintf(stdout, "Return type does not match with function declaration.\n");
@@ -721,9 +719,25 @@ invalid_fundec:
     }
 }
 
+static void handle_node_for_condition_checking(ast_node_t *ast_node, int depth) {
+    if (ast_node->node_type == AST_NODE_Stmt) {
+        ast_node_t *tbd = ast_1st_child(ast_node);
+        if (tbd->node_type == AST_NODE_IF || tbd->node_type == AST_NODE_WHILE) {
+            ast_node_t *exp = ast_3rd_child(ast_node);
+            if (exp->exp_type->primitive == PRIM_INVALID) return;
+            if (!type_check_int(exp->exp_type)) {
+                log_semantics_error_prologue("7", ast_node->lineno);
+                fprintf(stdout, "Incompatible type in if/while.\n");
+            }
+        }
+    }
+}
+
 void semantics_check() {
     /* definition checking and type checking */
     ast_walk(handle_node, handle_node_for_type_checking);
     /* return type checking */
     ast_walk(handle_node_for_return_checking, ast_walk_action_nop);
+    /* if and while condition checking */
+    ast_walk(handle_node_for_condition_checking, ast_walk_action_nop);
 }
