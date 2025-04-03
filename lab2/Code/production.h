@@ -12,5 +12,6 @@ struct production_rec_t {
 
 int production_match(ast_node_t *ast_node, production_rec_t *rec, int length);
 int production_epsilon(ast_node_t *ast_node);
+int production_is_leftvalue_exp(ast_node_t *exp);
 
 #endif

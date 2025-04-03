@@ -366,6 +366,10 @@ static void handle_exp(ast_node_t *exp) {
             if (exp1->exp_type->primitive == PRIM_INVALID || exp2->exp_type->primitive == PRIM_INVALID) {
                 goto handle_exp_failed;
             }
+            if (!production_is_leftvalue_exp(exp1)) {
+                log_semantics_error_prologue("6", exp1->lineno);
+                fprintf(stdout, "Assign to a not-left value.\n");
+            }
             if (!type_check_equality(exp1->exp_type, exp2->exp_type)) {
                 log_semantics_error_prologue("5", exp1->lineno);
                 fprintf(stdout, "Incompatible type about \"=\".\n");
