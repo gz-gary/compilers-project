@@ -579,7 +579,7 @@ static void handle_exp(ast_node_t *exp) {
                 fprintf(stdout, "Expression can't be negative.\n");
                 goto handle_exp_failed;
             }
-            exp->exp_type = type_new_basic_int();
+            exp->exp_type = exp1->exp_type;
             return;
         }
     }
@@ -599,7 +599,7 @@ static void handle_exp(ast_node_t *exp) {
                 fprintf(stdout, "Expression can't be positive.\n");
                 goto handle_exp_failed;
             }
-            exp->exp_type = type_new_basic_int();
+            exp->exp_type = exp1->exp_type;
             return;
         }
     }
