@@ -569,7 +569,6 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             if (exp1->exp_type->primitive != PRIM_BASIC) {
-                fprintf(stdout, "%d\n", exp1->exp_type->primitive);
                 log_semantics_error_prologue("7", exp1->lineno);
                 fprintf(stdout, "Expression can't be negative.\n");
                 goto handle_exp_failed;
