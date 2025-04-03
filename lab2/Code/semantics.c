@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+static int scope_depth = 0;
+
 static type_t* handle_specifier(ast_node_t *specifier);
 
 static void handle_compst(ast_node_t *compst);
@@ -42,17 +44,26 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
             const char *name;
             type_t *type = handle_vardec(spec_type, vardec, &name);
             // redefine check
-            if (symbtable_query_entry(name)) {
-                log_semantics_error_prologue(upper_struct == NULL ? "3" : "15", vardec->lineno);
-                fprintf(stdout, "Redefined %s \"%s\".\n", upper_struct == NULL ? "variable" : "field", name);
-            } else symbtable_add_entry(name, upper_struct == NULL ? SYMB_VAR : SYMB_FIELD, type);
+            symbtable_entry_t *entry = symbtable_query_entry(name);
             if (upper_struct) {
+                if (entry) {
+                    log_semantics_error_prologue("15", vardec->lineno);
+                    fprintf(stdout, "Redefined field \"%s\".\n", name);
+                } else symbtable_add_entry(name, SYMB_FIELD, type, scope_depth);
                 if (!ast_onlyone_child(dec)) {
                     /* try to initialize fields */
                     log_semantics_error_prologue("15", vardec->lineno);
                     fprintf(stdout, "Try to initialize fields \"%s\".\n", name);
                 }
                 type_add_struct_field(upper_struct, type, name);
+            } else {
+                if (entry && (entry->symb_type != SYMB_VAR || entry->depth == scope_depth)) {
+                    log_semantics_error_prologue("3", vardec->lineno);
+                    fprintf(stdout, "Redefined variable \"%s\".\n", name);
+                } else {
+                    dec->symb_to_del = 1;
+                    symbtable_add_entry(name, SYMB_VAR, type, scope_depth);
+                }
             }
             
             if (ast_onlyone_child(declist)) break;
@@ -111,7 +122,7 @@ static type_t* handle_specifier(ast_node_t *specifier) {
                     if (entry) {
                         log_semantics_error_prologue("16", (recs[1].ast_node)->lineno);
                         fprintf(stdout, "Redefined structure \"%s\".\n", symb);
-                    } else symbtable_add_entry(symb, SYMB_STRUCT, result);
+                    } else symbtable_add_entry(symb, SYMB_STRUCT, result, 0);
                 }
 
                 return result;
@@ -124,6 +135,49 @@ static type_t* handle_specifier(ast_node_t *specifier) {
 static void handle_compst(ast_node_t *compst) {
     ast_node_t *deflist = ast_2nd_child(compst); 
     handle_deflist(deflist, NULL);
+}
+
+static void clean_deflist(ast_node_t *deflist) {
+    while (!production_epsilon(deflist)) {
+        ast_node_t *def = ast_1st_child(deflist);
+        ast_node_t *rest = ast_2nd_child(deflist);
+        ast_node_t *declist = ast_2nd_child(def);
+        while (1) {
+            ast_node_t *dec = ast_1st_child(declist);
+            ast_node_t *vardec = ast_1st_child(dec);
+
+            while (!ast_onlyone_child(vardec)) vardec = ast_1st_child(vardec);
+            const char *name = ast_1st_child(vardec)->attr.identifier_value;
+            if (dec->symb_to_del) {
+                dec->symb_to_del = 0;
+                symbtable_remove_head(name);
+            }
+
+            if (ast_onlyone_child(declist)) break;
+            ast_node_t *rest = ast_3rd_child(declist);
+            declist = rest;
+        }
+
+        deflist = rest;
+    }
+}
+
+static void clean_varlist(ast_node_t *varlist) {
+    while (1) {
+        ast_node_t *paramdec = ast_1st_child(varlist);
+        ast_node_t *vardec = ast_2nd_child(paramdec);
+
+        while (!ast_onlyone_child(vardec)) vardec = ast_1st_child(vardec);
+        const char *param_name = ast_1st_child(vardec)->attr.identifier_value;
+        if (paramdec->symb_to_del) {
+            paramdec->symb_to_del = 0;
+            symbtable_remove_head(param_name);
+        }
+
+        if (ast_onlyone_child(varlist)) break;
+        ast_node_t *rest = ast_3rd_child(varlist);
+        varlist = rest;
+    }
 }
 
 static void handle_extdef(ast_node_t *extdef) {
@@ -147,7 +201,7 @@ static void handle_extdef(ast_node_t *extdef) {
                 if (symbtable_query_entry(name)) {
                     log_semantics_error_prologue("3", vardec->lineno);
                     fprintf(stdout, "Redefined variable \"%s\".\n", name);
-                } else symbtable_add_entry(name, SYMB_VAR, type);
+                } else symbtable_add_entry(name, SYMB_VAR, type, scope_depth);
                 /*
                     ExtDecList -> VarDec
                     | ExtDecList COMMA ExtDecList
@@ -183,7 +237,8 @@ static void handle_extdef(ast_node_t *extdef) {
                         log_semantics_error_prologue("3", vardec->lineno);
                         fprintf(stdout, "Redefined variable \"%s\".\n", param_name);
                     } else {
-                        symbtable_add_entry(param_name, SYMB_VAR, param_type);
+                        paramdec->symb_to_del = 1;
+                        symbtable_add_entry(param_name, SYMB_VAR, param_type, scope_depth + 1);
                         type_add_func_arg(func_type, param_type);
                     }
                     /*
@@ -198,7 +253,7 @@ static void handle_extdef(ast_node_t *extdef) {
             if (symbtable_query_entry(name)) {
                 log_semantics_error_prologue("4", id->lineno);
                 fprintf(stdout, "Redefined function \"%s\".\n", name);
-            } else symbtable_add_entry(name, SYMB_FUNC, func_type);
+            } else symbtable_add_entry(name, SYMB_FUNC, func_type, scope_depth);
 
         }
         break;
@@ -207,11 +262,12 @@ static void handle_extdef(ast_node_t *extdef) {
     }
 }
 
-static void handle_node(ast_node_t *ast_node, int depth) {
+static void handle_node_preorder(ast_node_t *ast_node, int depth) {
     switch (ast_node->node_type) {
     /* case AST_NODE_Def: */
     /* 不直接处理Def而是在Toplevel处理: CompSt/ExtDef */
     case AST_NODE_CompSt:
+        ++scope_depth;
         handle_compst(ast_node);
         break;
     case AST_NODE_ExtDef:
@@ -685,8 +741,19 @@ handle_exp_failed:
     return;
 }
 
-static void handle_node_for_type_checking(ast_node_t *ast_node, int depth) {
+static void handle_node_postorder(ast_node_t *ast_node, int depth) {
     if (ast_node->node_type == AST_NODE_Exp) handle_exp(ast_node);
+    if (ast_node->node_type == AST_NODE_CompSt) {
+        --scope_depth;
+        clean_deflist(ast_2nd_child(ast_node));
+    }
+    if (ast_node->node_type == AST_NODE_ExtDef) {
+        ast_node_t *fundec = ast_2nd_child(ast_node);
+        if (fundec->node_type == AST_NODE_FunDec) {
+            ast_node_t *varlist = ast_3rd_child(fundec);
+            if (varlist->node_type == AST_NODE_VarList) clean_varlist(varlist);
+        }
+    }
 }
 
 static type_t *current_return_type = NULL;
@@ -735,7 +802,7 @@ static void handle_node_for_condition_checking(ast_node_t *ast_node, int depth) 
 
 void semantics_check() {
     /* definition checking and type checking */
-    ast_walk(handle_node, handle_node_for_type_checking);
+    ast_walk(handle_node_preorder, handle_node_postorder);
     /* return type checking */
     ast_walk(handle_node_for_return_checking, ast_walk_action_nop);
     /* if and while condition checking */

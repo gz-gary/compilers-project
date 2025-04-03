@@ -11,10 +11,12 @@ struct symbtable_entry_t {
     enum symb_type_t symb_type;
     type_t *type;
     hashtable_entry_t hashtable_entry;
+    int depth;
 };
 typedef struct symbtable_entry_t symbtable_entry_t;
 
-void symbtable_add_entry(const char *symb, enum symb_type_t symb_type, type_t *type);
+void symbtable_add_entry(const char *symb, enum symb_type_t symb_type, type_t *type, int depth);
 symbtable_entry_t* symbtable_query_entry(const char *symb);
+void symbtable_remove_head(const char *symb);
 
 #endif

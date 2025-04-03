@@ -38,6 +38,10 @@ void hashtable_remove_entry(unsigned int slot_idx) {
     hashtable_slot_heads[slot_idx] = hashtable_slot_heads[slot_idx]->next;
 }
 
+void hashtable_remove_head(const char *key) {
+    hashtable_remove_entry(hashval(key));
+}
+
 hashtable_entry_t *hashtable_query_entry(const char *key) {
     uint slot_idx = hashval(key);
     for (hashtable_entry_t *entry = hashtable_slot_heads[slot_idx]; entry; entry = entry->next)

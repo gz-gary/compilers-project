@@ -66,6 +66,7 @@ struct ast_node_t {
     enum ast_node_type_t node_type;
     int lineno; // line number
     type_t *exp_type; // extension for type checking
+    int symb_to_del; // extension for scope
     union {
         int int_value;
         float float_value;
