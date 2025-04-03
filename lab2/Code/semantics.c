@@ -263,7 +263,7 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             if (entry->symb_type != SYMB_FUNC) {
-                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                log_semantics_error_prologue("11", recs[0].ast_node->lineno);
                 fprintf(stdout, "Not a function \"%s\".\n", symb);
                 goto handle_exp_failed;
             }
@@ -311,7 +311,7 @@ static void handle_exp(ast_node_t *exp) {
                 goto handle_exp_failed;
             }
             if (entry->symb_type != SYMB_FUNC) {
-                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                log_semantics_error_prologue("11", recs[0].ast_node->lineno);
                 fprintf(stdout, "Not a function \"%s\".\n", symb);
                 goto handle_exp_failed;
             }
