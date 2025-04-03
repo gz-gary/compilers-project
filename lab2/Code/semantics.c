@@ -258,7 +258,7 @@ static void handle_exp(ast_node_t *exp) {
             const char *symb = recs[0].ast_node->attr.identifier_value;
             symbtable_entry_t *entry = symbtable_query_entry(symb);
             if (!entry) {
-                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                log_semantics_error_prologue("2", recs[0].ast_node->lineno);
                 fprintf(stdout, "Undefined function \"%s\".\n", symb);
                 goto handle_exp_failed;
             }
@@ -306,7 +306,7 @@ static void handle_exp(ast_node_t *exp) {
             const char *symb = recs[0].ast_node->attr.identifier_value;
             symbtable_entry_t *entry = symbtable_query_entry(symb);
             if (!entry) {
-                log_semantics_error_prologue("?", recs[0].ast_node->lineno);
+                log_semantics_error_prologue("2", recs[0].ast_node->lineno);
                 fprintf(stdout, "Undefined function \"%s\".\n", symb);
                 goto handle_exp_failed;
             }
