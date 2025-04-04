@@ -4,6 +4,11 @@
 #include <assert.h>
 #include <stdlib.h>
 
+static int check_name_equality(const char *a, const char *b) {
+    if (a == NULL || b == NULL) return 0;
+    return !strcmp(a, b);
+}
+
 static int check_fields_equality(struct_field_t *a, struct_field_t *b) {
     if (a == NULL) return b == NULL;
     if (b == NULL) return a == NULL;
@@ -28,7 +33,7 @@ int type_check_equality(type_t *a, type_t *b)
     case PRIM_ARRAY:
         return type_check_equality(a->elem_type, b->elem_type);
     case PRIM_STRUCT:
-        return check_fields_equality(a->first_field, b->first_field);
+        return check_name_equality(a->struct_name, b->struct_name);
     case PRIM_FUNC:
         return 0; // we will never check func-type equality
     }
@@ -59,8 +64,9 @@ type_t *type_new_array(type_t *elem_type) {
     return type;
 }
 
-type_t *type_new_struct() {
+type_t *type_new_struct(const char *name) {
     type_t *type = malloc(sizeof(type_t));
+    type->struct_name = name; // 匿名结构体为NULL
     type->primitive = PRIM_STRUCT;
     type->first_field = NULL;
     type->last_field = NULL;

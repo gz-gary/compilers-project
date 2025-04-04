@@ -104,7 +104,7 @@ static type_t* handle_specifier(ast_node_t *specifier) {
             /* case 3: define new struct specifier */
             production_rec_t recs[5] = {
                 {NULL, AST_NODE_STRUCT},
-                {NULL, AST_NODE_OptTag},
+                {NULL, AST_NODE_OptTag}, // 可能是epsilon，匿名结构体
                 {NULL, AST_NODE_LC},
                 {NULL, AST_NODE_DefList},
                 {NULL, AST_NODE_RC},
@@ -115,7 +115,7 @@ static type_t* handle_specifier(ast_node_t *specifier) {
                     ast_1st_child(recs[1].ast_node)->attr.identifier_value;
 
                 ast_node_t *deflist = recs[3].ast_node;
-                type_t *result = type_new_struct();
+                type_t *result = type_new_struct(symb);
                 handle_deflist(deflist, result);
                 if (symb) {
                     symbtable_entry_t *entry = symbtable_query_entry(symb);

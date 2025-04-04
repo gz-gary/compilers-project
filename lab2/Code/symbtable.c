@@ -9,10 +9,10 @@ void symbtable_add_entry(const char *symb, enum symb_type_t symb_type, type_t *t
     entry->symb_type = symb_type;
     entry->type = type;
     entry->depth = depth;
-    printf("%s -> ", symb);
-    printf("[%s] ", symb_type == SYMB_VAR ? "variable" : (symb_type == SYMB_STRUCT ? "struct" : (symb_type == SYMB_FUNC ? "function" : "field")));
-    log_type(type);
-    printf("\n");
+    // printf("%s -> ", symb);
+    // printf("[%s] ", symb_type == SYMB_VAR ? "variable" : (symb_type == SYMB_STRUCT ? "struct" : (symb_type == SYMB_FUNC ? "function" : "field")));
+    // log_type(type);
+    // printf("\n");
 
     hashtable_init_entry(&(entry->hashtable_entry), symb);
     hashtable_add_entry(&(entry->hashtable_entry));

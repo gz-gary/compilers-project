@@ -26,6 +26,7 @@ struct type_t {
         type_t *elem_type;
 
         struct {
+            const char *struct_name; // 实现名等价
             struct_field_t *first_field;
             struct_field_t *last_field;
         };
