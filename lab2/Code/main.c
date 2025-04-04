@@ -17,7 +17,8 @@ int main(int argc, char const *argv[]) {
         yyrestart(f);
     }
     yyparse();
-    assert(!parse_error);
-    semantics_check();
+    if (!parse_error) {
+        semantics_check();
+    }
     return 0;
 }
