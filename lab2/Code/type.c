@@ -10,7 +10,6 @@ static int check_fields_equality(struct_field_t *a, struct_field_t *b) {
     return type_check_equality(a->type, b->type) && check_fields_equality(a->next_field, b->next_field);
 }
 
-// int 改成 type_t *
 type_t *type_query_struct_field(type_t *struct_type, const char *field_name) {
     struct_field_t *field = struct_type->first_field;
     while (field != NULL) {
