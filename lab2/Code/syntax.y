@@ -87,6 +87,9 @@ ExtDef: Specifier ExtDecList SEMI {
     ast_add_child($$, $1);
     $$->lineno = $1->lineno;
 }
+    | Specifier FunDec SEMI {
+        yyerror("Function definition without body");
+    }
     ;
 ExtDecList: VarDec {
     $$ = ast_new_node(AST_NODE_ExtDecList);
