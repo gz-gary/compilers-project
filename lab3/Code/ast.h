@@ -1,6 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include "ir.h"
 #include "type.h"
 #include "tree.h"
 #define tree2ast(node) ((ast_node_t *)((void *)(node) - (void *)(&(((ast_node_t *)(0))->tree_node))))
@@ -67,6 +68,9 @@ struct ast_node_t {
     int lineno; // line number
     type_t *exp_type; // extension for type checking
     int symb_to_del; // extension for scope
+    /* extension for lowering to ir */
+    ir_variable_t *address;
+    ir_code_block_t *code;
     union {
         int int_value;
         float float_value;

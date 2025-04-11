@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "semantics.h"
+#include "cmm2ir.h"
 
 extern int yyparse();
 extern int yyrestart(FILE *);
@@ -20,5 +21,6 @@ int main(int argc, char const *argv[]) {
     if (!parse_error) {
         semantics_check();
     }
+    cmm2ir();
     return 0;
 }
