@@ -86,6 +86,7 @@ while {
 }
 {relop} {
     yylval = ast_new_node(AST_NODE_RELOP);
+    yylval->attr.relop_name = str_new_copy(yytext);
     return RELOP;
 }
 \+ {

@@ -78,6 +78,7 @@ struct ast_node_t {
         float float_value;
         const char *identifier_value;
         const char *typename_value;
+        const char *relop_name;
     } attr;
     tree_node_t tree_node;
 };

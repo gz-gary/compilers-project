@@ -3,6 +3,7 @@
 #include <string.h>
 
 static int temp_counter = 0;
+static int temp_counter2 = 0;
 
 ir_variable_t *ir_get_id_variable(const char *id) {
     ir_variable_t *var = malloc(sizeof(ir_variable_t));
@@ -121,6 +122,39 @@ ir_code_t *ir_new_code_dec(const char *dec_name, int dec_size) {
     return code;
 }
 
+ir_code_t *ir_new_code_label() {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_LABEL;
+
+    int len = snprintf(NULL, 0, "label%d", temp_counter2) + 1;
+    char *name = calloc(len, sizeof(char));
+    sprintf(name, "label%d", temp_counter2);
+    code->label_name = name;
+    temp_counter2++;
+
+    code->prev = code->next = NULL;
+    return code;
+}
+
+ir_code_t *ir_new_code_goto(ir_code_t *goto_dest) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_GOTO;
+    code->goto_dest = goto_dest;
+    code->prev = code->next = NULL;
+    return code;
+}
+
+ir_code_t *ir_new_code_relop_goto(ir_variable_t *relop1, ir_variable_t *relop2, const char *relop_name, ir_code_t *relop_goto_dest) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_RELOP_GOTO;
+    code->relop1 = relop1;
+    code->relop2 = relop2;
+    code->relop_name = relop_name;
+    code->relop_goto_dest = relop_goto_dest;
+    code->prev = code->next = NULL;
+    return code;
+}
+
 void ir_dump(FILE *file, ir_code_block_t *block) {
     ir_code_t *code = block->first;
     while (code != NULL) {
@@ -154,13 +188,22 @@ void ir_dump(FILE *file, ir_code_block_t *block) {
             }
             break;
         case IR_FUNDEC:
-            fprintf(file, "FUNCTION %s:\n", code->fun_name);
+            fprintf(file, "FUNCTION %s :\n", code->fun_name);
             break;
         case IR_RETURN:
             fprintf(file, "RETURN %s\n", code->ret_var->name);
             break;
         case IR_DEC:
             fprintf(file, "DEC %s %d\n", code->dec_name, code->dec_size);
+            break;
+        case IR_LABEL:
+            fprintf(file, "LABEL %s :\n", code->label_name);
+            break;
+        case IR_GOTO:
+            fprintf(file, "GOTO %s\n", code->goto_dest->label_name);
+            break;
+        case IR_RELOP_GOTO:
+            fprintf(file, "IF %s %s %s GOTO %s\n", code->relop1->name, code->relop_name, code->relop2->name, code->relop_goto_dest->label_name);
             break;
         default:
             break;

@@ -16,6 +16,9 @@ enum ir_code_type_t {
     IR_FUNDEC,
     IR_RETURN,
     IR_DEC,
+    IR_LABEL,
+    IR_GOTO,
+    IR_RELOP_GOTO,
 };
 
 struct ir_code_t {
@@ -38,6 +41,18 @@ struct ir_code_t {
         struct {
             const char *dec_name;
             int dec_size;
+        };
+        struct {
+            const char *label_name;
+        };
+        struct {
+            struct ir_code_t *goto_dest;
+        };
+        struct {
+            struct ir_variable_t* relop1;
+            struct ir_variable_t* relop2;
+            const char *relop_name;
+            struct ir_code_t *relop_goto_dest;
         };
     };
 };
@@ -71,6 +86,14 @@ struct ir_code_t* ir_new_code_op(
 struct ir_code_t* ir_new_code_fundec(const char *fun_name);
 struct ir_code_t* ir_new_code_return(struct ir_variable_t *ret_var);
 struct ir_code_t* ir_new_code_dec(const char *dec_name, int dec_size);
+struct ir_code_t* ir_new_code_label();
+struct ir_code_t* ir_new_code_goto(struct ir_code_t *goto_dest);
+struct ir_code_t* ir_new_code_relop_goto(
+    struct ir_variable_t* relop1,
+    struct ir_variable_t* relop2,
+    const char *relop_name,
+    struct ir_code_t *relop_goto_dest
+);
 
 void ir_dump(FILE* file, struct ir_code_block_t *block);
 

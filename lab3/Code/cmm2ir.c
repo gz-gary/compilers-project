@@ -128,6 +128,30 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 3)) {
             /* RELOP */
+            exp->address = ir_new_temp_variable();
+            exp->code = ir_concat_code_block(recs[0].ast_node->code, recs[2].ast_node->code);
+            ir_code_t *true_skip = ir_new_code_label();
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_op(exp->address, ir_get_int_variable(1), NULL, "ASSIGN")
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_relop_goto(
+                    recs[0].ast_node->address,
+                    recs[2].ast_node->address,
+                    recs[1].ast_node->attr.relop_name,
+                    true_skip
+                )
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_op(exp->address, ir_get_int_variable(0), NULL, "ASSIGN")
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                true_skip
+            );
             return;
         }
     }
@@ -319,6 +343,83 @@ static void handle_stmt(ast_node_t *stmt) {
             stmt->code = ir_append_code(
                 stmt->code,
                 ir_new_code_return(recs[1].ast_node->address)
+            );
+            return;
+        }
+    }
+    {
+        production_rec_t recs[5] = {
+            {NULL, AST_NODE_IF},
+            {NULL, AST_NODE_LP},
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_RP},
+            {NULL, AST_NODE_Stmt},
+        };
+        if (production_match(stmt, recs, 5)) {
+            stmt->code = recs[2].ast_node->code;
+            ir_code_t *false_branch = ir_new_code_label();
+            stmt->code = ir_append_code(
+                stmt->code,
+                ir_new_code_relop_goto(
+                    recs[2].ast_node->address,
+                    ir_get_int_variable(0),
+                    "==",
+                    false_branch
+                )
+            );
+            stmt->code = ir_concat_code_block(
+                stmt->code,
+                recs[4].ast_node->code
+            );
+            stmt->code = ir_append_code(
+                stmt->code,
+                false_branch
+            );
+            return;
+        }
+    }
+    {
+        production_rec_t recs[7] = {
+            {NULL, AST_NODE_IF},
+            {NULL, AST_NODE_LP},
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_RP},
+            {NULL, AST_NODE_Stmt},
+            {NULL, AST_NODE_ELSE},
+            {NULL, AST_NODE_Stmt},
+        };
+        if (production_match(stmt, recs, 7)) {
+            stmt->code = recs[2].ast_node->code;
+            ir_code_t *false_branch = ir_new_code_label();
+            ir_code_t *go_out = ir_new_code_label();
+            stmt->code = ir_append_code(
+                stmt->code,
+                ir_new_code_relop_goto(
+                    recs[2].ast_node->address,
+                    ir_get_int_variable(0),
+                    "==",
+                    false_branch
+                )
+            );
+            stmt->code = ir_concat_code_block(
+                stmt->code,
+                recs[4].ast_node->code
+            );
+            stmt->code = ir_append_code(
+                stmt->code,
+                ir_new_code_goto(go_out)
+            );
+            stmt->code = ir_append_code(
+                stmt->code,
+                false_branch
+            );
+            stmt->code = ir_concat_code_block(
+                stmt->code,
+                recs[6].ast_node->code
+            );
+            stmt->code = ir_append_code(
+                stmt->code,
+                go_out
             );
             return;
         }
