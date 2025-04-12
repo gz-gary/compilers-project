@@ -180,6 +180,22 @@ ir_code_t *ir_new_code_param(ir_variable_t *param_var) {
     return code;
 }
 
+ir_code_t *ir_new_code_read(ir_variable_t *read_var) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_READ;
+    code->read_var = read_var;
+    code->prev = code->next = NULL;
+    return code;
+}
+
+ir_code_t *ir_new_code_write(ir_variable_t *write_var) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_WRITE;
+    code->write_var = write_var;
+    code->prev = code->next = NULL;
+    return code;
+}
+
 void ir_dump(FILE *file, ir_code_block_t *block) {
     ir_code_t *code = block->first;
     while (code != NULL) {
@@ -238,6 +254,12 @@ void ir_dump(FILE *file, ir_code_block_t *block) {
             break;
         case IR_PARAM:
             fprintf(file, "PARAM %s\n", code->param_var->name);
+            break;
+        case IR_READ:
+            fprintf(file, "READ %s\n", code->read_var->name);
+            break;
+        case IR_WRITE:
+            fprintf(file, "WRITE %s\n", code->write_var->name);
             break;
         default:
             break;

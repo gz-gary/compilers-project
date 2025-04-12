@@ -2,6 +2,7 @@
 #include "production.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void handle_exp(ast_node_t *exp) {
     {
@@ -24,6 +25,14 @@ static void handle_exp(ast_node_t *exp) {
             /* function call */
             exp->address = ir_new_temp_variable();
             exp->code = ir_new_code_block();
+            if (!strcmp(recs[0].ast_node->attr.identifier_value, "read")) {
+                /* call special function write(x) */
+                exp->code = ir_append_code(
+                    exp->code,
+                    ir_new_code_read(exp->address)
+                );
+                return;
+            }
             exp->code = ir_append_code(
                 exp->code,
                 ir_new_code_call(
@@ -66,6 +75,23 @@ static void handle_exp(ast_node_t *exp) {
             exp->address = ir_new_temp_variable();
             exp->code = ir_new_code_block();
             ast_node_t *args = recs[2].ast_node;
+            if (!strcmp(recs[0].ast_node->attr.identifier_value, "write")) {
+                /* call special function write(x) */
+                ast_node_t *exp_ = ast_1st_child(args);
+                exp->code = ir_concat_code_block(
+                    exp->code,
+                    exp_->code
+                );
+                exp->code = ir_append_code(
+                    exp->code,
+                    ir_new_code_write(exp_->address)
+                );
+                exp->code = ir_append_code(
+                    exp->code,
+                    ir_new_code_op(exp->address, ir_get_int_variable(0), NULL, "ASSIGN") /* write(x) always return 0 */
+                );
+                return;
+            }
             while (1) {
                 ast_node_t *exp_ = ast_1st_child(args);
                 exp->code = ir_concat_code_block(

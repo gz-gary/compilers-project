@@ -23,5 +23,8 @@ int main() {
     c = p(b);
     c = add(a, b);
     c = gcd(a, b);
+    write(c);
+    d = read();
+    write(d+1);
     return 0;
 }
