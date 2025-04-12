@@ -155,6 +155,31 @@ ir_code_t *ir_new_code_relop_goto(ir_variable_t *relop1, ir_variable_t *relop2, 
     return code;
 }
 
+ir_code_t *ir_new_code_call(ir_variable_t *call_result, const char *call_name) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_CALL;
+    code->call_result = call_result;
+    code->call_name = call_name;
+    code->prev = code->next = NULL;
+    return code;
+}
+
+ir_code_t *ir_new_code_arg(ir_variable_t *arg_var) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_ARG;
+    code->arg_var = arg_var;
+    code->prev = code->next = NULL;
+    return code;
+}
+
+ir_code_t *ir_new_code_param(ir_variable_t *param_var) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_PARAM;
+    code->param_var = param_var;
+    code->prev = code->next = NULL;
+    return code;
+}
+
 void ir_dump(FILE *file, ir_code_block_t *block) {
     ir_code_t *code = block->first;
     while (code != NULL) {
@@ -204,6 +229,15 @@ void ir_dump(FILE *file, ir_code_block_t *block) {
             break;
         case IR_RELOP_GOTO:
             fprintf(file, "IF %s %s %s GOTO %s\n", code->relop1->name, code->relop_name, code->relop2->name, code->relop_goto_dest->label_name);
+            break;
+        case IR_CALL:
+            fprintf(file, "%s := CALL %s\n", code->call_result->name, code->call_name);
+            break;
+        case IR_ARG:
+            fprintf(file, "ARG %s\n", code->arg_var->name);
+            break;
+        case IR_PARAM:
+            fprintf(file, "PARAM %s\n", code->param_var->name);
             break;
         default:
             break;

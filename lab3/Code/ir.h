@@ -19,6 +19,9 @@ enum ir_code_type_t {
     IR_LABEL,
     IR_GOTO,
     IR_RELOP_GOTO,
+    IR_CALL,
+    IR_ARG,
+    IR_PARAM,
 };
 
 struct ir_code_t {
@@ -53,6 +56,16 @@ struct ir_code_t {
             struct ir_variable_t* relop2;
             const char *relop_name;
             struct ir_code_t *relop_goto_dest;
+        };
+        struct {
+            struct ir_variable_t* call_result;
+            const char *call_name;
+        };
+        struct {
+            struct ir_variable_t* arg_var;
+        };
+        struct {
+            struct ir_variable_t* param_var;
         };
     };
 };
@@ -94,6 +107,9 @@ struct ir_code_t* ir_new_code_relop_goto(
     const char *relop_name,
     struct ir_code_t *relop_goto_dest
 );
+struct ir_code_t* ir_new_code_call(struct ir_variable_t* call_result, const char *call_name);
+struct ir_code_t* ir_new_code_arg(struct ir_variable_t* arg_var);
+struct ir_code_t* ir_new_code_param(struct ir_variable_t* param_var);
 
 void ir_dump(FILE* file, struct ir_code_block_t *block);
 

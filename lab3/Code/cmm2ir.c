@@ -22,6 +22,15 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 3)) {
             /* function call */
+            exp->address = ir_new_temp_variable();
+            exp->code = ir_new_code_block();
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_call(
+                    exp->address,
+                    recs[0].ast_node->attr.identifier_value
+                )
+            );
             return;
         }
     }
@@ -54,6 +63,29 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 4)) {
             /* function call */
+            exp->address = ir_new_temp_variable();
+            exp->code = ir_new_code_block();
+            ast_node_t *args = recs[2].ast_node;
+            while (1) {
+                ast_node_t *exp_ = ast_1st_child(args);
+                exp->code = ir_concat_code_block(
+                    exp->code,
+                    exp_->code
+                );
+                if (ast_onlyone_child(args)) break;
+                args = ast_3rd_child(args);
+            }
+            exp->code = ir_concat_code_block(
+                exp->code,
+                args->code
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_call(
+                    exp->address,
+                    recs[0].ast_node->attr.identifier_value
+                )
+            );
             return;
         }
     }
@@ -591,12 +623,67 @@ static void handle_extdef(ast_node_t *extdef) {
             extdef->code,
             ir_new_code_fundec(id->attr.identifier_value)
         );
+
+        ast_node_t *varlist = ast_3rd_child(fundec);
+        if (varlist->node_type == AST_NODE_VarList) {
+            while (1) {
+                ast_node_t *paramdec = ast_1st_child(varlist);
+                ast_node_t *spec = ast_1st_child(paramdec);
+                ast_node_t *vardec = ast_2nd_child(paramdec);
+
+                /* assert that there is no array param */
+                ast_node_t *id = ast_1st_child(vardec);
+                extdef->code = ir_append_code(
+                    extdef->code,
+                    ir_new_code_param(ir_get_id_variable(id->attr.identifier_value))
+                );
+                
+                if (ast_onlyone_child(varlist)) break;
+                varlist = ast_3rd_child(varlist);
+            }
+        }
+
         extdef->code = ir_concat_code_block(
             extdef->code,
             compst->code
         );
+    }
+}
 
-        ir_dump(stdout, extdef->code);
+static void handle_extdeflist(ast_node_t *extdeflist) {
+    if (production_epsilon(extdeflist)) {
+        extdeflist->code = ir_new_code_block();
+    } else {
+        ast_node_t *extdef = ast_1st_child(extdeflist);
+        ast_node_t *rest = ast_2nd_child(extdeflist);
+        extdeflist->code = ir_concat_code_block(
+            extdef->code,
+            rest->code
+        );
+    }
+}
+
+static void handle_program(ast_node_t *program) {
+    ast_node_t *extdeflist = ast_1st_child(program);
+    ir_dump(stdout, extdeflist->code);
+}
+
+static void handle_args(ast_node_t *args) {
+    if (ast_onlyone_child(args)) {
+        ast_node_t *exp = ast_1st_child(args);
+        args->code = ir_new_code_block();
+        args->code = ir_append_code(
+            args->code,
+            ir_new_code_arg(exp->address)
+        );
+    } else {
+        ast_node_t *exp = ast_1st_child(args);
+        ast_node_t *rest = ast_3rd_child(args);
+        args->code = rest->code;
+        args->code = ir_append_code(
+            args->code,
+            ir_new_code_arg(exp->address)
+        );
     }
 }
 
@@ -606,6 +693,9 @@ static void handler_entry(ast_node_t *ast_node, int depth) {
     else if (ast_node->node_type == AST_NODE_StmtList) handle_stmtlist(ast_node);
     else if (ast_node->node_type == AST_NODE_CompSt) handle_compst(ast_node);
     else if (ast_node->node_type == AST_NODE_ExtDef) handle_extdef(ast_node);
+    else if (ast_node->node_type == AST_NODE_ExtDefList) handle_extdeflist(ast_node);
+    else if (ast_node->node_type == AST_NODE_Program) handle_program(ast_node);
+    else if (ast_node->node_type == AST_NODE_Args) handle_args(ast_node);
 }
 
 void cmm2ir() {

@@ -1,0 +1,8 @@
+int box() {
+    return 666;
+}
+
+int main() {
+    int n;
+    n = box();
+}

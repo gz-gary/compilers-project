@@ -1,0 +1,27 @@
+int s(int x) {
+    return x + 1;
+}
+
+int p(int x) {
+    return x - 1;
+}
+
+int add(int x, int y) {
+    return x + y;
+}
+
+int gcd(int x, int y) {
+    if (y == 0) return x;
+    else return gcd(y, x - y);
+}
+
+int main() {
+    int a, b, c;
+    a = 2;
+    b = 10;
+    c = s(a);
+    c = p(b);
+    c = add(a, b);
+    c = gcd(a, b);
+    return 0;
+}
