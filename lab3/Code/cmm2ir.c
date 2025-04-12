@@ -95,11 +95,37 @@ static void handle_exp(ast_node_t *exp) {
             {NULL, AST_NODE_Exp}
         };
         if (production_match(exp, recs, 3)) {
+            ir_code_t *go_out = ir_new_code_label();
             exp->address = ir_new_temp_variable();
-            exp->code = ir_concat_code_block(recs[0].ast_node->code, recs[2].ast_node->code);
+            exp->code = ir_new_code_block();
             exp->code = ir_append_code(
                 exp->code,
-                ir_new_code_op(exp->address, recs[0].ast_node->address, recs[2].ast_node->address, "AND")
+                ir_new_code_op(exp->address, ir_get_int_variable(0), NULL, "ASSIGN")
+            );
+            exp->code = ir_concat_code_block(
+                exp->code,
+                recs[0].ast_node->code
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_relop_goto(
+                    recs[0].ast_node->address,
+                    ir_get_int_variable(0),
+                    "==",
+                    go_out
+                )
+            );
+            exp->code = ir_concat_code_block(
+                exp->code,
+                recs[2].ast_node->code
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_op(exp->address, recs[2].ast_node->address, NULL, "ASSIGN")
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                go_out
             );
             return;
         }
@@ -111,11 +137,37 @@ static void handle_exp(ast_node_t *exp) {
             {NULL, AST_NODE_Exp}
         };
         if (production_match(exp, recs, 3)) {
+            ir_code_t *go_out = ir_new_code_label();
             exp->address = ir_new_temp_variable();
-            exp->code = ir_concat_code_block(recs[0].ast_node->code, recs[2].ast_node->code);
+            exp->code = ir_new_code_block();
             exp->code = ir_append_code(
                 exp->code,
-                ir_new_code_op(exp->address, recs[0].ast_node->address, recs[2].ast_node->address, "OR")
+                ir_new_code_op(exp->address, ir_get_int_variable(1), NULL, "ASSIGN")
+            );
+            exp->code = ir_concat_code_block(
+                exp->code,
+                recs[0].ast_node->code
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_relop_goto(
+                    recs[0].ast_node->address,
+                    ir_get_int_variable(0),
+                    "!=",
+                    go_out
+                )
+            );
+            exp->code = ir_concat_code_block(
+                exp->code,
+                recs[2].ast_node->code
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_op(exp->address, recs[2].ast_node->address, NULL, "ASSIGN")
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                go_out
             );
             return;
         }
@@ -267,11 +319,33 @@ static void handle_exp(ast_node_t *exp) {
             {NULL, AST_NODE_Exp}
         };
         if (production_match(exp, recs, 2)) {
+            ir_code_t *go_out = ir_new_code_label();
             exp->address = ir_new_temp_variable();
-            exp->code = recs[1].ast_node->code;
+            exp->code = ir_new_code_block();
             exp->code = ir_append_code(
                 exp->code,
-                ir_new_code_op(exp->address, recs[1].ast_node->address, NULL, "NOT")
+                ir_new_code_op(exp->address, ir_get_int_variable(0), NULL, "ASSIGN")
+            );
+            exp->code = ir_concat_code_block(
+                exp->code,
+                recs[1].ast_node->code
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_relop_goto(
+                    recs[1].ast_node->address,
+                    ir_get_int_variable(0),
+                    "!=",
+                    go_out
+                )
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_op(exp->address, ir_get_int_variable(1), NULL, "ASSIGN")
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                go_out
             );
             return;
         }
@@ -322,6 +396,15 @@ static void handle_exp(ast_node_t *exp) {
 }
 
 static void handle_stmt(ast_node_t *stmt) {
+    {
+        production_rec_t recs[1] = {
+            {NULL, AST_NODE_CompSt},
+        };
+        if (production_match(stmt, recs, 1)) {
+            stmt->code = recs[0].ast_node->code;
+            return;
+        }
+    }
     {
         production_rec_t recs[2] = {
             {NULL, AST_NODE_Exp},
