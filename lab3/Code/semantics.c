@@ -810,6 +810,12 @@ static void handle_node_for_condition_checking(ast_node_t *ast_node, int depth) 
 }
 
 void semantics_check() {
+    {
+        symbtable_add_entry("read", SYMB_FUNC, type_new_func(type_new_basic_int()), 0);
+        type_t *temp = type_new_func(type_new_basic_int());
+        type_add_func_arg(temp, type_new_basic_int());
+        symbtable_add_entry("write", SYMB_FUNC, temp, 0);
+    }
     /* definition checking and type checking */
     ast_walk(handle_node_preorder, handle_node_postorder);
     /* return type checking */
