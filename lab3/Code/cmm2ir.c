@@ -507,6 +507,50 @@ static void handle_stmt(ast_node_t *stmt) {
             return;
         }
     }
+    {
+        production_rec_t recs[5] = {
+            {NULL, AST_NODE_WHILE},
+            {NULL, AST_NODE_LP},
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_RP},
+            {NULL, AST_NODE_Stmt},
+        };
+        if (production_match(stmt, recs, 5)) {
+            ir_code_t *very_begin = ir_new_code_label();
+            ir_code_t *go_out = ir_new_code_label();
+            stmt->code = ir_new_code_block();
+            stmt->code = ir_append_code(
+                stmt->code,
+                very_begin
+            );
+            stmt->code = ir_concat_code_block(
+                stmt->code,
+                recs[2].ast_node->code
+            );
+            stmt->code = ir_append_code(
+                stmt->code,
+                ir_new_code_relop_goto(
+                    recs[2].ast_node->address,
+                    ir_get_int_variable(0),
+                    "==",
+                    go_out
+                )
+            );
+            stmt->code = ir_concat_code_block(
+                stmt->code,
+                recs[4].ast_node->code
+            );
+            stmt->code = ir_append_code(
+                stmt->code,
+                ir_new_code_goto(very_begin)
+            );
+            stmt->code = ir_append_code(
+                stmt->code,
+                go_out
+            );
+            return;
+        }
+    }
 }
 
 static void handle_stmtlist(ast_node_t *stmtlist) {
