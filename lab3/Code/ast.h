@@ -71,6 +71,8 @@ struct ast_node_t {
     /* extension for lowering to ir */
     ir_variable_t *address;
     ir_code_block_t *code;
+    struct ir_dec_t *ir_dec_head;
+
     union {
         int int_value;
         float float_value;

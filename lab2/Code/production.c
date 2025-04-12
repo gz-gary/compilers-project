@@ -32,7 +32,7 @@ int production_is_leftvalue_exp(ast_node_t *exp) {
             {NULL, AST_NODE_Exp},
             {NULL, AST_NODE_RB}
         };
-        if (production_match(exp, recs, 4)) return 1;
+        if (production_match(exp, recs, 4)) return 2;
     }
     {
         production_rec_t recs[3] = {
@@ -40,7 +40,7 @@ int production_is_leftvalue_exp(ast_node_t *exp) {
             {NULL, AST_NODE_DOT},
             {NULL, AST_NODE_ID}
         };
-        if (production_match(exp, recs, 3)) return 1;
+        if (production_match(exp, recs, 3)) return 3;
     }
     return 0;
 }

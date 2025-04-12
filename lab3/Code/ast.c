@@ -68,6 +68,7 @@ ast_node_t *ast_new_node(enum ast_node_type_t node_type)
     new_node->lineno = yylineno;
     new_node->exp_type = NULL;
     new_node->symb_to_del = 0;
+    new_node->ir_dec_head = NULL;
     return new_node;
 }
 

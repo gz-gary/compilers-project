@@ -64,12 +64,27 @@ static void handle_exp(ast_node_t *exp) {
             {NULL, AST_NODE_Exp}
         };
         if (production_match(exp, recs, 3)) {
-            exp->address = recs[0].ast_node->address;
-            exp->code = ir_concat_code_block(recs[2].ast_node->code, recs[0].ast_node->code);
-            exp->code = ir_append_code(
-                exp->code,
-                ir_new_code_op(recs[0].ast_node->address, recs[2].ast_node->address, NULL, "ASSIGN")
-            );
+            switch (production_is_leftvalue_exp(recs[0].ast_node)) {
+            case 1:
+                exp->address = recs[0].ast_node->address;
+                exp->code = ir_concat_code_block(recs[2].ast_node->code, recs[0].ast_node->code);
+                exp->code = ir_append_code(
+                    exp->code,
+                    ir_new_code_op(recs[0].ast_node->address, recs[2].ast_node->address, NULL, "ASSIGN")
+                );
+                break;
+            case 2:
+                exp->address = recs[0].ast_node->address;
+                ir_remove_last_code(recs[0].ast_node->code);
+                exp->code = ir_concat_code_block(recs[2].ast_node->code, recs[0].ast_node->code);
+                exp->code = ir_append_code(
+                    exp->code,
+                    ir_new_code_op(recs[0].ast_node->address, recs[2].ast_node->address, NULL, "DEREF_L")
+                );
+                break;
+            default:
+                break;
+            }
             return;
         }
     }
@@ -246,6 +261,26 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 4)) {
             /* array access */
+            exp->address = ir_new_temp_variable();
+            ir_variable_t *offset = ir_new_temp_variable();
+            ir_variable_t *base = production_is_leftvalue_exp(recs[0].ast_node) == 1 ? ir_get_ref_variable(recs[0].ast_node->address) : recs[0].ast_node->address;
+            ir_variable_t *size = ir_get_int_variable(recs[0].ast_node->exp_type->elem_type->size_in_bytes);
+            ir_variable_t *index = recs[2].ast_node->address;
+            exp->code = ir_concat_code_block(recs[0].ast_node->code, recs[2].ast_node->code);
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_op(offset, index, size, "MULT")
+            );
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_op(exp->address, base, offset, "PLUS")
+            );
+            if (exp->exp_type->primitive != PRIM_ARRAY) {
+                exp->code = ir_append_code(
+                    exp->code,
+                    ir_new_code_op(exp->address, exp->address, NULL, "DEREF_R")
+                );
+            }
             return;
         }
     }
@@ -263,15 +298,86 @@ static void handle_exp(ast_node_t *exp) {
 }
 
 static void handle_stmt(ast_node_t *stmt) {
+    {
+        production_rec_t recs[2] = {
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_SEMI},
+        };
+        if (production_match(stmt, recs, 2)) {
+            stmt->code = recs[0].ast_node->code;
+            return;
+        }
+    }
+    {
+        production_rec_t recs[3] = {
+            {NULL, AST_NODE_RETURN},
+            {NULL, AST_NODE_Exp},
+            {NULL, AST_NODE_SEMI},
+        };
+        if (production_match(stmt, recs, 3)) {
+            stmt->code = recs[1].ast_node->code;
+            stmt->code = ir_append_code(
+                stmt->code,
+                ir_new_code_return(recs[1].ast_node->address)
+            );
+            return;
+        }
+    }
+}
+
+static void handle_stmtlist(ast_node_t *stmtlist) {
+    if (!production_epsilon(stmtlist)) {
+        ast_node_t *stmt = ast_1st_child(stmtlist);
+        ast_node_t *rest = ast_2nd_child(stmtlist);
+        stmtlist->code = ir_concat_code_block(stmt->code, rest->code);
+    } else {
+        stmtlist->code = ir_new_code_block();
+    }
+}
+
+static void handle_compst(ast_node_t *compst) {
+    ast_node_t *stmtlist = ast_3rd_child(compst);
+    ast_node_t *deflist = ast_2nd_child(compst);
+    struct ir_dec_t *head = deflist->ir_dec_head;
+    compst->code = ir_new_code_block();
+    while (head != NULL) {
+        compst->code = ir_append_code(
+            compst->code,
+            ir_new_code_dec(head->name, head->size)
+        );
+        head = head->next;
+    }
+    compst->code = ir_concat_code_block(
+        compst->code,
+        stmtlist->code
+    );
+}
+
+static void handle_extdef(ast_node_t *extdef) {
+    if (ast_2nd_child(extdef)->node_type == AST_NODE_FunDec) {
+        extdef->code = ir_new_code_block();
+        ast_node_t *fundec = ast_2nd_child(extdef);
+        ast_node_t *id = ast_1st_child(fundec);
+        ast_node_t *compst = ast_3rd_child(extdef);
+        extdef->code = ir_append_code(
+            extdef->code,
+            ir_new_code_fundec(id->attr.identifier_value)
+        );
+        extdef->code = ir_concat_code_block(
+            extdef->code,
+            compst->code
+        );
+
+        ir_dump(stdout, extdef->code);
+    }
 }
 
 static void handler_entry(ast_node_t *ast_node, int depth) {
-    if (ast_node->node_type == AST_NODE_Exp) {
-        handle_exp(ast_node);
-        ir_dump(stdout, ast_node->code);
-        fprintf(stdout, "\n");
-    }
-    if (ast_node->node_type == AST_NODE_Stmt) handle_stmt(ast_node);
+    if (ast_node->node_type == AST_NODE_Exp) handle_exp(ast_node);
+    else if (ast_node->node_type == AST_NODE_Stmt) handle_stmt(ast_node);
+    else if (ast_node->node_type == AST_NODE_StmtList) handle_stmtlist(ast_node);
+    else if (ast_node->node_type == AST_NODE_CompSt) handle_compst(ast_node);
+    else if (ast_node->node_type == AST_NODE_ExtDef) handle_extdef(ast_node);
 }
 
 void cmm2ir() {

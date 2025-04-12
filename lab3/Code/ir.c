@@ -10,6 +10,15 @@ ir_variable_t *ir_get_id_variable(const char *id) {
     return var;
 }
 
+struct ir_variable_t* ir_get_ref_variable(struct ir_variable_t *var) {
+    ir_variable_t *ref = malloc(sizeof(ir_variable_t));
+    int len = snprintf(NULL, 0, "&%s", var->name) + 1;
+    char *name = calloc(len, sizeof(char));
+    sprintf(name, "&%s", var->name);
+    ref->name = name;
+    return ref;
+}
+
 ir_variable_t *ir_get_int_variable(int i) {
     ir_variable_t *var = malloc(sizeof(ir_variable_t));
     int len = snprintf(NULL, 0, "#%d", i) + 1;
@@ -39,7 +48,9 @@ ir_variable_t *ir_new_temp_variable() {
 }
 
 ir_code_block_t *ir_concat_code_block(ir_code_block_t *block1, ir_code_block_t *block2) {
+    if (block1->first == NULL) return block2;
     if (block2->first != NULL) {
+        block2->first->prev = block1->last;
         block1->last->next = block2->first;
         block1->last = block2->last;
     }
@@ -51,10 +62,21 @@ ir_code_block_t *ir_append_code(ir_code_block_t *block, ir_code_t *code) {
     if (block->first == NULL) {
         block->first = block->last = code;
     } else {
+        code->prev = block->last;
         block->last->next = code;
         block->last = code;
     }
     return block;
+}
+
+void ir_remove_last_code(ir_code_block_t *block) {
+    ir_code_t *code = block->last;
+    if (code) {
+        if (code->prev) code->prev->next = NULL;
+        block->last = code->prev;
+        code->prev = NULL;
+        // free(code);
+    }
 }
 
 ir_code_block_t *ir_new_code_block() {
@@ -70,6 +92,32 @@ ir_code_t *ir_new_code_op(ir_variable_t *result, ir_variable_t *op1, ir_variable
     code->op1 = op1;
     code->op2 = op2;
     code->op_name = op_name;
+    code->prev = code->next = NULL;
+    return code;
+}
+
+ir_code_t *ir_new_code_fundec(const char *fun_name) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_FUNDEC;
+    code->fun_name = fun_name;
+    code->prev = code->next = NULL;
+    return code;
+}
+
+ir_code_t *ir_new_code_return(ir_variable_t *ret_var) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_RETURN;
+    code->ret_var = ret_var;
+    code->prev = code->next = NULL;
+    return code;
+}
+
+ir_code_t *ir_new_code_dec(const char *dec_name, int dec_size) {
+    ir_code_t *code = malloc(sizeof(ir_code_t));
+    code->type = IR_DEC;
+    code->dec_name = dec_name;
+    code->dec_size = dec_size;
+    code->prev = code->next = NULL;
     return code;
 }
 
@@ -80,26 +128,39 @@ void ir_dump(FILE *file, ir_code_block_t *block) {
         case IR_OP:
             {
                 if (!strcmp(code->op_name, "ASSIGN"))
-                    fprintf(file, "%s = %s\n", code->result->name, code->op1->name);
+                    fprintf(file, "%s := %s\n", code->result->name, code->op1->name);
                 else if (!strcmp(code->op_name, "AND"))
-                    fprintf(file, "%s = %s && %s\n", code->result->name, code->op1->name, code->op2->name);
+                    fprintf(file, "%s := %s && %s\n", code->result->name, code->op1->name, code->op2->name);
                 else if (!strcmp(code->op_name, "OR"))
-                    fprintf(file, "%s = %s || %s\n", code->result->name, code->op1->name, code->op2->name);
+                    fprintf(file, "%s := %s || %s\n", code->result->name, code->op1->name, code->op2->name);
                 else if (!strcmp(code->op_name, "PLUS"))
-                    fprintf(file, "%s = %s + %s\n", code->result->name, code->op1->name, code->op2->name);
+                    fprintf(file, "%s := %s + %s\n", code->result->name, code->op1->name, code->op2->name);
                 else if (!strcmp(code->op_name, "MINUS"))
-                    fprintf(file, "%s = %s - %s\n", code->result->name, code->op1->name, code->op2->name);
+                    fprintf(file, "%s := %s - %s\n", code->result->name, code->op1->name, code->op2->name);
                 else if (!strcmp(code->op_name, "MULT"))
-                    fprintf(file, "%s = %s * %s\n", code->result->name, code->op1->name, code->op2->name);
+                    fprintf(file, "%s := %s * %s\n", code->result->name, code->op1->name, code->op2->name);
                 else if (!strcmp(code->op_name, "DIV"))
-                    fprintf(file, "%s = %s / %s\n", code->result->name, code->op1->name, code->op2->name);
+                    fprintf(file, "%s := %s / %s\n", code->result->name, code->op1->name, code->op2->name);
                 else if (!strcmp(code->op_name, "NEG"))
-                    fprintf(file, "%s = -%s\n", code->result->name, code->op1->name);
+                    fprintf(file, "%s := -%s\n", code->result->name, code->op1->name);
                 else if (!strcmp(code->op_name, "POS"))
-                    fprintf(file, "%s = +%s\n", code->result->name, code->op1->name);
+                    fprintf(file, "%s := +%s\n", code->result->name, code->op1->name);
                 else if (!strcmp(code->op_name, "NOT"))
-                    fprintf(file, "%s = !%s\n", code->result->name, code->op1->name);
+                    fprintf(file, "%s := !%s\n", code->result->name, code->op1->name);
+                else if (!strcmp(code->op_name, "DEREF_R"))
+                    fprintf(file, "%s := *%s\n", code->result->name, code->op1->name);
+                else if (!strcmp(code->op_name, "DEREF_L"))
+                    fprintf(file, "*%s := %s\n", code->result->name, code->op1->name);
             }
+            break;
+        case IR_FUNDEC:
+            fprintf(file, "FUNCTION %s:\n", code->fun_name);
+            break;
+        case IR_RETURN:
+            fprintf(file, "RETURN %s\n", code->ret_var->name);
+            break;
+        case IR_DEC:
+            fprintf(file, "DEC %s %d\n", code->dec_name, code->dec_size);
             break;
         default:
             break;

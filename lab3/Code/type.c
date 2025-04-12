@@ -47,6 +47,7 @@ type_t *type_new_basic_int() {
     type_t *type = malloc(sizeof(type_t));
     type->primitive = PRIM_BASIC;
     type->basic = PRIM_BASIC_INT;
+    type->size_in_bytes = 4;
     return type;
 }
 
@@ -54,13 +55,15 @@ type_t *type_new_basic_float() {
     type_t *type = malloc(sizeof(type_t));
     type->primitive = PRIM_BASIC;
     type->basic = PRIM_BASIC_FLOAT;
+    type->size_in_bytes = 4;
     return type;
 }
 
-type_t *type_new_array(type_t *elem_type) {
+type_t *type_new_array(type_t *elem_type, int elem_amount) {
     type_t *type = malloc(sizeof(type_t));
     type->primitive = PRIM_ARRAY;
     type->elem_type = elem_type;
+    type->size_in_bytes = elem_amount * elem_type->size_in_bytes;
     return type;
 }
 

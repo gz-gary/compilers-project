@@ -18,7 +18,9 @@ static type_t *handle_vardec(type_t *specifier_type, ast_node_t *vardec, const c
     if (first_child->node_type == AST_NODE_ID) {
         *name = first_child->attr.identifier_value;
         return specifier_type;
-    } else return handle_vardec(type_new_array(specifier_type), first_child, name);
+    } else {
+        return handle_vardec(type_new_array(specifier_type, ast_3rd_child(vardec)->attr.int_value), first_child, name);
+    }
 }
 
 static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
@@ -43,6 +45,13 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
 
             const char *name;
             type_t *type = handle_vardec(spec_type, vardec, &name);
+            if (!upper_struct && type->primitive == PRIM_ARRAY) {
+                struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
+                temp->name = name;
+                temp->size = type->size_in_bytes;
+                temp->next = deflist->ir_dec_head;
+                deflist->ir_dec_head = temp;
+            }
             // redefine check
             symbtable_entry_t *entry = symbtable_query_entry(name);
             if (upper_struct) {

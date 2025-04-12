@@ -37,6 +37,7 @@ struct type_t {
             type_t *return_type;
         };
     };
+    int size_in_bytes;
 };
 
 type_t* type_query_struct_field(type_t *struct_type, const char *field_name);
@@ -45,8 +46,8 @@ int type_check_equality(type_t *a, type_t *b);
 int type_check_int(type_t *a);
 type_t* type_new_basic_int();
 type_t* type_new_basic_float();
-type_t* type_new_array(type_t *elem_type);
-type_t* type_new_struct();
+type_t* type_new_array(type_t *elem_type, int elem_amount);
+type_t* type_new_struct(const char *name);
 type_t* type_new_func(type_t *return_type);
 type_t* type_new_invalid();
 void type_add_struct_field(type_t *s, type_t *type, const char *name);
