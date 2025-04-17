@@ -1,6 +1,9 @@
 int main() {
     int x, a[2][2], b[10][2][3];
+    a[1][0] = 1;
     x = a[1][0];
+    write(x);
     a[x+1][x-1] = x + 100;
+    write(a[x+1][x-1]);
     return 0;
 }

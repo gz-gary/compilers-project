@@ -20,9 +20,12 @@ int main() {
     a = 2;
     b = 10;
     c = s(a);
+    write(c);
     c = p(b);
+    write(c);
     c = add(a, b);
-    c = gcd(a, b);
+    write(c);
+    c = gcd(2, 3);
     write(c);
     d = read();
     write(d+1);

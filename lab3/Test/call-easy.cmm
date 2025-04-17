@@ -5,4 +5,5 @@ int box() {
 int main() {
     int n;
     n = box();
+    return 0;
 }

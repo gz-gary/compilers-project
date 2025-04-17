@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+FILE *output_file = NULL;
+
 static void handle_exp(ast_node_t *exp) {
     {
         production_rec_t recs[1] = {
@@ -691,7 +693,10 @@ static void handle_extdeflist(ast_node_t *extdeflist) {
 
 static void handle_program(ast_node_t *program) {
     ast_node_t *extdeflist = ast_1st_child(program);
-    ir_dump(stdout, extdeflist->code);
+    if (output_file == NULL) {
+        output_file = stdout;
+    }
+    ir_dump(output_file, extdeflist->code);
 }
 
 static void handle_args(ast_node_t *args) {
@@ -726,4 +731,9 @@ static void handler_entry(ast_node_t *ast_node, int depth) {
 
 void cmm2ir() {
     ast_walk(ast_walk_action_nop, handler_entry);
+}
+
+void cmm2ir_and_dump(FILE *f) {
+    output_file = f;
+    cmm2ir();
 }
