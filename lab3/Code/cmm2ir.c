@@ -28,7 +28,7 @@ static void handle_exp(ast_node_t *exp) {
             exp->address = ir_new_temp_variable();
             exp->code = ir_new_code_block();
             if (!strcmp(recs[0].ast_node->attr.identifier_value, "read")) {
-                /* call special function write(x) */
+                /* call special function read() */
                 exp->code = ir_append_code(
                     exp->code,
                     ir_new_code_read(exp->address)

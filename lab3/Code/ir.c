@@ -217,9 +217,9 @@ void ir_dump(FILE *file, ir_code_block_t *block) {
                 else if (!strcmp(code->op_name, "DIV"))
                     fprintf(file, "%s := %s / %s\n", code->result->name, code->op1->name, code->op2->name);
                 else if (!strcmp(code->op_name, "NEG"))
-                    fprintf(file, "%s := -%s\n", code->result->name, code->op1->name);
+                    fprintf(file, "%s := #0 - %s\n", code->result->name, code->op1->name);
                 else if (!strcmp(code->op_name, "POS"))
-                    fprintf(file, "%s := +%s\n", code->result->name, code->op1->name);
+                    fprintf(file, "%s := #0 + %s\n", code->result->name, code->op1->name);
                 else if (!strcmp(code->op_name, "NOT"))
                     fprintf(file, "%s := !%s\n", code->result->name, code->op1->name);
                 else if (!strcmp(code->op_name, "DEREF_R"))
