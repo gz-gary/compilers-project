@@ -46,11 +46,12 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
             const char *name;
             type_t *type = handle_vardec(spec_type, vardec, &name);
             if (!upper_struct && type->primitive == PRIM_ARRAY) {
-                struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
-                temp->name = name;
-                temp->size = type->size_in_bytes;
-                temp->next = deflist->ir_dec_head;
-                deflist->ir_dec_head = temp;
+                // struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
+                // temp->name = name;
+                // temp->size = type->size_in_bytes;
+                // temp->next = deflist->ir_dec_head;
+                // deflist->ir_dec_head = temp;
+                vardec->ir_dec_head = temp;
             }
             // redefine check
             symbtable_entry_t *entry = symbtable_query_entry(name);
@@ -456,20 +457,7 @@ static void handle_exp(ast_node_t *exp) {
             if (!type_check_int(exp1->exp_type)) {
                 log_semantics_error_prologue("7", exp1->lineno);
                 if (exp1->attr.identifier_value != NULL) {
-                    switch (exp1->node_type)
-                    {
-                    // 或许可以实现更具体的报错
-                    // case AST_NODE_ID:
-                    //     fprintf(stdout, "\"%s &&\" not boolean.\n", exp1->attr.identifier_value);
-                    //     break;
-                    // case AST_NODE_FLOAT:
-                    //     fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
-                    //     break;
-                    default:
-                        // fprintf(stdout, "ast node type:%d\t", exp1->node_type);
-                        fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
-                        break;
-                    }
+                    fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
                 } else {
                     fprintf(stdout, "Left expression on the \"&&\" not boolean.\n");
                 }

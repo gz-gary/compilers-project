@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 FILE *output_file = NULL;
 
@@ -623,18 +624,81 @@ static void handle_stmtlist(ast_node_t *stmtlist) {
     }
 }
 
+static void handle_vardec(ast_node_t *vardec) {
+    vardec->code = ir_new_code_block();
+    if (vardec->ir_dec_head != NULL) { // 定义为数组的情况
+        vardec->code = ir_append_code(
+            vardec->code,
+            ir_new_code_dec(vardec->ir_dec_head->name, vardec->ir_dec_head->size)
+        );
+    }
+}
+
+static void handle_dec(ast_node_t *dec) {
+    ast_node_t *vardec = ast_1st_child(dec);
+    dec->code = vardec->code;
+    if (!ast_onlyone_child(dec)) {
+        ast_node_t *exp = ast_3rd_child(dec);
+        /* 
+            还没处理数组的赋值
+            d[12] = 3; 符合语法
+            d[12] = {3}; 不符合
+        */
+        ast_node_t *first_child = ast_1st_child(vardec);
+        vardec->address = ir_get_id_variable(first_child->attr.identifier_value);
+        dec->address = vardec->address;
+        dec->code = ir_concat_code_block(exp->code, vardec->code);
+        dec->code = ir_append_code(
+            dec->code,
+            ir_new_code_op(vardec->address, exp->address, NULL, "ASSIGN")
+        );
+    }
+}
+
+static void handle_declist(ast_node_t *declist) {
+    ast_node_t *dec = ast_1st_child(declist);
+    declist->code = dec->code;
+    if (!ast_onlyone_child(declist)) {
+        ast_node_t *declist_ = ast_3rd_child(declist);
+        declist->code = ir_concat_code_block(
+            dec->code,
+            declist_->code
+        );
+    }
+    assert(declist->code != NULL);
+}
+
+static void handle_deflist(ast_node_t *deflist) {
+    if (production_epsilon(deflist)) {
+        deflist->code = ir_new_code_block();
+    } else {
+        /*
+            DefList -> Def DefList
+            Def -> Specifier DecList SEMI
+            DecList -> Dec
+            | Dec COMMA DecList
+            Dec -> VarDec
+            | VarDec ASSIGNOP Exp
+        */
+        ast_node_t *def = ast_1st_child(deflist);
+        ast_node_t *declist = ast_2nd_child(def);
+        def->code = declist->code;
+        ast_node_t *rest = ast_2nd_child(deflist);
+        deflist->code = ir_concat_code_block(
+            def->code,
+            rest->code
+        );
+    }
+}
+
 static void handle_compst(ast_node_t *compst) {
     ast_node_t *stmtlist = ast_3rd_child(compst);
     ast_node_t *deflist = ast_2nd_child(compst);
-    struct ir_dec_t *head = deflist->ir_dec_head;
     compst->code = ir_new_code_block();
-    while (head != NULL) {
-        compst->code = ir_append_code(
-            compst->code,
-            ir_new_code_dec(head->name, head->size)
-        );
-        head = head->next;
-    }
+    compst->code = ir_concat_code_block(
+        compst->code,
+        deflist->code
+    );
     compst->code = ir_concat_code_block(
         compst->code,
         stmtlist->code
@@ -722,6 +786,10 @@ static void handler_entry(ast_node_t *ast_node, int depth) {
     if (ast_node->node_type == AST_NODE_Exp) handle_exp(ast_node);
     else if (ast_node->node_type == AST_NODE_Stmt) handle_stmt(ast_node);
     else if (ast_node->node_type == AST_NODE_StmtList) handle_stmtlist(ast_node);
+    else if (ast_node->node_type == AST_NODE_VarDec) handle_vardec(ast_node);
+    else if (ast_node->node_type == AST_NODE_Dec) handle_dec(ast_node);
+    else if (ast_node->node_type == AST_NODE_DecList) handle_declist(ast_node);
+    else if (ast_node->node_type == AST_NODE_DefList) handle_deflist(ast_node);
     else if (ast_node->node_type == AST_NODE_CompSt) handle_compst(ast_node);
     else if (ast_node->node_type == AST_NODE_ExtDef) handle_extdef(ast_node);
     else if (ast_node->node_type == AST_NODE_ExtDefList) handle_extdeflist(ast_node);
