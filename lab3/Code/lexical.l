@@ -24,6 +24,7 @@ newline  (\r|\n|\r\n)
 float    ({digit}*\.{digit}+|{digit}+\.)
 
 %%
+"//".* {}
 (0|([1-9]{digit}*)) {
     yylval = ast_new_node(AST_NODE_INT);
     yylval->attr.int_value = atoi(yytext);

@@ -46,11 +46,11 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
             const char *name;
             type_t *type = handle_vardec(spec_type, vardec, &name);
             if (!upper_struct && type->primitive == PRIM_ARRAY) {
-                // struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
-                // temp->name = name;
-                // temp->size = type->size_in_bytes;
-                // temp->next = deflist->ir_dec_head;
-                // deflist->ir_dec_head = temp;
+                struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
+                temp->name = name;
+                temp->size = type->size_in_bytes;
+                temp->next = deflist->ir_dec_head;
+                deflist->ir_dec_head = temp;
                 vardec->ir_dec_head = temp;
             }
             // redefine check

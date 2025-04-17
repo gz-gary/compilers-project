@@ -1,3 +1,4 @@
+// hello
 int mod(int a,int b)
 {
     return a -(a / b) * b;
@@ -39,6 +40,7 @@ int main()
             i = i + 1;
 	}
 	dayofweek = mod(days, 7);
+    // 这里应该输出4而不是3
     write(dayofweek);
 	motherday = 14 - dayofweek;
 	write(5);
