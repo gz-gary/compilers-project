@@ -135,6 +135,7 @@ static void handle_exp(ast_node_t *exp) {
                 );
                 break;
             case 2:
+            case 3:
                 exp->address = recs[0].ast_node->address;
                 ir_remove_last_code(recs[0].ast_node->code);
                 exp->code = ir_concat_code_block(recs[2].ast_node->code, recs[0].ast_node->code);
@@ -434,7 +435,7 @@ static void handle_exp(ast_node_t *exp) {
                 exp->code,
                 ir_new_code_op(exp->address, base, offset, "PLUS")
             );
-            if (exp->exp_type->primitive != PRIM_ARRAY) {
+            if (exp->exp_type->primitive == PRIM_BASIC) {
                 exp->code = ir_append_code(
                     exp->code,
                     ir_new_code_op(exp->address, exp->address, NULL, "DEREF_R")
@@ -451,6 +452,22 @@ static void handle_exp(ast_node_t *exp) {
         };
         if (production_match(exp, recs, 3)) {
             /* field access */
+            exp->address = ir_new_temp_variable();
+            ir_variable_t *base = production_is_leftvalue_exp(recs[0].ast_node) == 1 ? ir_get_ref_variable(recs[0].ast_node->address) : recs[0].ast_node->address;
+            type_t *type = recs[0].ast_node->exp_type;
+            field_t *field = type_query_struct_field(type, recs[2].ast_node->attr.identifier_value);
+            ir_variable_t *offset = ir_get_int_variable(field->offset);
+            exp->code = recs[0].ast_node->code;
+            exp->code = ir_append_code(
+                exp->code,
+                ir_new_code_op(exp->address, base, offset, "PLUS")
+            );
+            if (exp->exp_type->primitive == PRIM_BASIC) {
+                exp->code = ir_append_code(
+                    exp->code,
+                    ir_new_code_op(exp->address, exp->address, NULL, "DEREF_R")
+                );
+            }
             return;
         }
     }

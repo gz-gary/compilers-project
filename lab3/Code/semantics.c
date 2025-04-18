@@ -45,7 +45,7 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
 
             const char *name;
             type_t *type = handle_vardec(spec_type, vardec, &name);
-            if (!upper_struct && type->primitive == PRIM_ARRAY) {
+            if (!upper_struct && (type->primitive == PRIM_ARRAY || type->primitive == PRIM_STRUCT)) {
                 struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
                 temp->name = name;
                 temp->size = type->size_in_bytes;
@@ -720,13 +720,13 @@ static void handle_exp(ast_node_t *exp) {
                 fprintf(stdout, "Not a struct.\n");
                 goto handle_exp_failed;
             }
-            type_t *field_type = type_query_struct_field(exp1->exp_type, field_name);
-            if (!field_type) {
+            field_t *field = type_query_struct_field(exp1->exp_type, field_name);
+            if (!field) {
                 log_semantics_error_prologue("14", exp1->lineno);
                 fprintf(stdout, "No such field \"%s\".\n", field_name);
                 goto handle_exp_failed;
             }
-            exp->exp_type = field_type;
+            exp->exp_type = field->type;
             return;
         }
     }

@@ -9,16 +9,16 @@ static int check_name_equality(const char *a, const char *b) {
     return !strcmp(a, b);
 }
 
-static int check_fields_equality(struct_field_t *a, struct_field_t *b) {
+static int check_fields_equality(field_t *a, field_t *b) {
     if (a == NULL) return b == NULL;
     if (b == NULL) return a == NULL;
     return type_check_equality(a->type, b->type) && check_fields_equality(a->next_field, b->next_field);
 }
 
-type_t *type_query_struct_field(type_t *struct_type, const char *field_name) {
-    struct_field_t *field = struct_type->first_field;
+field_t *type_query_struct_field(type_t *struct_type, const char *field_name) {
+    field_t *field = struct_type->first_field;
     while (field != NULL) {
-        if (!strcmp(field->name, field_name)) return field->type;
+        if (!strcmp(field->name, field_name)) return field;
         field = field->next_field;
     }
     return NULL;
@@ -87,13 +87,16 @@ type_t *type_new_func(type_t *return_type) {
 
 void type_add_struct_field(type_t *s, type_t *type, const char *name) {
     assert(s->primitive == PRIM_STRUCT);
-    struct_field_t *field = malloc(sizeof(struct_field_t));
+    s->size_in_bytes += type->size_in_bytes;
+    field_t *field = malloc(sizeof(field_t));
     field->type = type;
     field->name = name;
     if (s->first_field) {
+        field->offset = s->last_field->offset + s->last_field->type->size_in_bytes;
         s->last_field->next_field = field;
         s->last_field = field;
     } else {
+        field->offset = 0;
         s->first_field = field;
         s->last_field = s->first_field;
     }
@@ -133,7 +136,7 @@ void log_type(type_t *type) {
         break;
     case PRIM_STRUCT:
         printf("struct{");
-        struct_field_t *field = type->first_field;
+        field_t *field = type->first_field;
         while (field != NULL) {
             printf("%s: ", field->name);
             log_type(field->type);

@@ -1,0 +1,11 @@
+int main() {
+    struct Point { int x, y; } a, b, c;
+    int n;
+    a.x = read();
+    a.y = read();
+    b.x = read();
+    b.y = read();
+    c.x = a.x - b.x;
+    c.y = a.y - b.y;
+    n = c.x * c.x + c.y * c.y;
+}

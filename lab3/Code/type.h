@@ -3,14 +3,15 @@
 
 #define type_func_noarg(func) (((func)->firstarg) == NULL)
 
-typedef struct struct_field_t struct_field_t;
+typedef struct field_t field_t;
 typedef struct arglist_t arglist_t;
 typedef struct type_t type_t;
 
-struct struct_field_t {
+struct field_t {
     type_t *type;
     const char *name;
-    struct_field_t *next_field;
+    field_t *next_field;
+    int offset;
 };
 
 struct arglist_t {
@@ -27,8 +28,8 @@ struct type_t {
 
         struct {
             const char *struct_name; // 实现名等价
-            struct_field_t *first_field;
-            struct_field_t *last_field;
+            field_t *first_field;
+            field_t *last_field;
         };
 
         struct {
@@ -40,7 +41,7 @@ struct type_t {
     int size_in_bytes;
 };
 
-type_t* type_query_struct_field(type_t *struct_type, const char *field_name);
+field_t* type_query_struct_field(type_t *struct_type, const char *field_name);
 int type_check_equality(type_t *a, type_t *b);
 // AND OR ... 两边表达式要求为INT类型
 int type_check_int(type_t *a);
