@@ -164,10 +164,11 @@ ir_code_t *ir_new_code_call(ir_variable_t *call_result, const char *call_name) {
     return code;
 }
 
-ir_code_t *ir_new_code_arg(ir_variable_t *arg_var) {
+ir_code_t *ir_new_code_arg(ir_variable_t *arg_var, int arg_ref) {
     ir_code_t *code = malloc(sizeof(ir_code_t));
     code->type = IR_ARG;
     code->arg_var = arg_var;
+    code->arg_ref = arg_ref;
     code->prev = code->next = NULL;
     return code;
 }
@@ -250,7 +251,7 @@ void ir_dump(FILE *file, ir_code_block_t *block) {
             fprintf(file, "%s := CALL %s\n", code->call_result->name, code->call_name);
             break;
         case IR_ARG:
-            fprintf(file, "ARG %s\n", code->arg_var->name);
+            fprintf(file, "ARG %s%s\n", code->arg_ref ? "&" : "", code->arg_var->name);
             break;
         case IR_PARAM:
             fprintf(file, "PARAM %s\n", code->param_var->name);

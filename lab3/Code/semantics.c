@@ -243,6 +243,13 @@ static void handle_extdef(ast_node_t *extdef) {
                     type_t *param_spec_type = handle_specifier(param_spec);
                     type_t *param_type = handle_vardec(param_spec_type, vardec, &param_name);
 
+                    {
+                        struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
+                        temp->name = param_name;
+                        temp->next = fundec->ir_dec_head;
+                        fundec->ir_dec_head = temp;
+                    }
+
                     if (symbtable_query_entry(param_name)) {
                         log_semantics_error_prologue("3", vardec->lineno);
                         fprintf(stdout, "Redefined variable \"%s\".\n", param_name);

@@ -65,6 +65,7 @@ struct ir_code_t {
         };
         struct {
             struct ir_variable_t* arg_var;
+            int arg_ref;
         };
         struct {
             struct ir_variable_t* param_var;
@@ -116,7 +117,7 @@ struct ir_code_t* ir_new_code_relop_goto(
     struct ir_code_t *relop_goto_dest
 );
 struct ir_code_t* ir_new_code_call(struct ir_variable_t* call_result, const char *call_name);
-struct ir_code_t* ir_new_code_arg(struct ir_variable_t* arg_var);
+struct ir_code_t* ir_new_code_arg(struct ir_variable_t* arg_var, int arg_ref);
 struct ir_code_t* ir_new_code_param(struct ir_variable_t* param_var);
 struct ir_code_t* ir_new_code_read(struct ir_variable_t* read_var);
 struct ir_code_t* ir_new_code_write(struct ir_variable_t* write_var);

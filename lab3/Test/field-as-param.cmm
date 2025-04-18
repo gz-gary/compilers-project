@@ -1,0 +1,23 @@
+int dd() {
+    struct Point {
+        int x, y;
+        struct Boom {
+            int z;
+            float f;
+        } boom;
+    } dd0;
+}
+
+int norm(struct Boom b) {
+    return b.z;
+}
+
+int main() {
+    struct Point test;
+    test.x = 1;
+    test.y = 2;
+    test.boom.z = 10;
+    test.boom.f = 1.0;
+    write(norm(test.boom));
+    return 0;
+}

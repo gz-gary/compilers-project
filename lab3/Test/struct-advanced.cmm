@@ -1,0 +1,14 @@
+int main() {
+    struct Test {
+        int a[5];
+        float x;
+        float y;
+        int b[2][2];
+        int z;
+        struct Boom {
+            int haha;
+        } h;
+    } test;
+    test.h.haha = 0;
+    test.b[0][1] = 3;
+}

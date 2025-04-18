@@ -7,6 +7,17 @@
 
 FILE *output_file = NULL;
 
+static struct ir_dec_t *current_param_head = NULL;
+
+static int is_ref(const char *name) {
+    struct ir_dec_t *head = current_param_head;
+    while (head) {
+        if (!strcmp(head->name, name)) return 1;
+        head = head->next;
+    }
+    return 0;
+}
+
 static void handle_exp(ast_node_t *exp) {
     {
         production_rec_t recs[1] = {
@@ -453,7 +464,11 @@ static void handle_exp(ast_node_t *exp) {
         if (production_match(exp, recs, 3)) {
             /* field access */
             exp->address = ir_new_temp_variable();
-            ir_variable_t *base = production_is_leftvalue_exp(recs[0].ast_node) == 1 ? ir_get_ref_variable(recs[0].ast_node->address) : recs[0].ast_node->address;
+            ir_variable_t *base = 
+                production_is_leftvalue_exp(recs[0].ast_node) == 1
+                && !is_ref(ast_1st_child(recs[0].ast_node)->attr.identifier_value)
+                ? ir_get_ref_variable(recs[0].ast_node->address)
+                : recs[0].ast_node->address;
             type_t *type = recs[0].ast_node->exp_type;
             field_t *field = type_query_struct_field(type, recs[2].ast_node->attr.identifier_value);
             ir_variable_t *offset = ir_get_int_variable(field->offset);
@@ -783,20 +798,26 @@ static void handle_program(ast_node_t *program) {
 static void handle_args(ast_node_t *args) {
     if (ast_onlyone_child(args)) {
         ast_node_t *exp = ast_1st_child(args);
+        int flag = exp->exp_type->primitive == PRIM_STRUCT && production_is_leftvalue_exp(exp) == 1 ? 1 : 0;
         args->code = ir_new_code_block();
         args->code = ir_append_code(
             args->code,
-            ir_new_code_arg(exp->address)
+            ir_new_code_arg(exp->address, flag)
         );
     } else {
         ast_node_t *exp = ast_1st_child(args);
+        int flag = exp->exp_type->primitive == PRIM_STRUCT && production_is_leftvalue_exp(exp) == 1 ? 1 : 0;
         ast_node_t *rest = ast_3rd_child(args);
         args->code = rest->code;
         args->code = ir_append_code(
             args->code,
-            ir_new_code_arg(exp->address)
+            ir_new_code_arg(exp->address, flag)
         );
     }
+}
+
+static void handle_fundec(ast_node_t *fundec) {
+    current_param_head = fundec->ir_dec_head;
 }
 
 static void handler_entry(ast_node_t *ast_node, int depth) {
@@ -814,8 +835,12 @@ static void handler_entry(ast_node_t *ast_node, int depth) {
     else if (ast_node->node_type == AST_NODE_Args) handle_args(ast_node);
 }
 
+static void preorder_entry(ast_node_t *ast_node, int depth) {
+    if (ast_node->node_type == AST_NODE_FunDec) handle_fundec(ast_node);
+}
+
 void cmm2ir() {
-    ast_walk(ast_walk_action_nop, handler_entry);
+    ast_walk(preorder_entry, handler_entry);
 }
 
 void cmm2ir_and_dump(FILE *f) {
