@@ -798,7 +798,7 @@ static void handle_program(ast_node_t *program) {
 static void handle_args(ast_node_t *args) {
     if (ast_onlyone_child(args)) {
         ast_node_t *exp = ast_1st_child(args);
-        int flag = exp->exp_type->primitive == PRIM_STRUCT && production_is_leftvalue_exp(exp) == 1 ? 1 : 0;
+        int flag = exp->exp_type->primitive == PRIM_STRUCT && production_is_leftvalue_exp(exp) == 1 && !is_ref(ast_1st_child(exp)->attr.identifier_value) ? 1 : 0;
         args->code = ir_new_code_block();
         args->code = ir_append_code(
             args->code,
@@ -806,7 +806,7 @@ static void handle_args(ast_node_t *args) {
         );
     } else {
         ast_node_t *exp = ast_1st_child(args);
-        int flag = exp->exp_type->primitive == PRIM_STRUCT && production_is_leftvalue_exp(exp) == 1 ? 1 : 0;
+        int flag = exp->exp_type->primitive == PRIM_STRUCT && production_is_leftvalue_exp(exp) == 1 && !is_ref(ast_1st_child(exp)->attr.identifier_value) ? 1 : 0;
         ast_node_t *rest = ast_3rd_child(args);
         args->code = rest->code;
         args->code = ir_append_code(

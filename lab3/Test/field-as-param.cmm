@@ -9,7 +9,10 @@ int dd() {
 }
 
 int norm(struct Boom b) {
-    return b.z;
+    struct Boom bb;
+    b.z = b.z - 1;
+    norm(b);
+    return norm(bb);
 }
 
 int main() {
