@@ -771,6 +771,8 @@ static void handle_extdef(ast_node_t *extdef) {
             extdef->code,
             compst->code
         );
+    } else {
+        extdef->code = ir_new_code_block();
     }
 }
 
