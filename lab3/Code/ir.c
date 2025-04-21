@@ -227,6 +227,8 @@ void ir_dump(FILE *file, ir_code_block_t *block) {
                     fprintf(file, "%s := *%s\n", code->result->name, code->op1->name);
                 else if (!strcmp(code->op_name, "DEREF_L"))
                     fprintf(file, "*%s := %s\n", code->result->name, code->op1->name);
+                else if (!strcmp(code->op_name, "DEREF_LR"))
+                    fprintf(file, "*%s := *%s\n", code->result->name, code->op1->name);
             }
             break;
         case IR_FUNDEC:

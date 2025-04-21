@@ -138,12 +138,79 @@ static void handle_exp(ast_node_t *exp) {
         if (production_match(exp, recs, 3)) {
             switch (production_is_leftvalue_exp(recs[0].ast_node)) {
             case 1:
-                exp->address = recs[0].ast_node->address;
-                exp->code = ir_concat_code_block(recs[2].ast_node->code, recs[0].ast_node->code);
-                exp->code = ir_append_code(
-                    exp->code,
-                    ir_new_code_op(recs[0].ast_node->address, recs[2].ast_node->address, NULL, "ASSIGN")
-                );
+                if (recs[0].ast_node->exp_type->primitive == PRIM_ARRAY) {
+                    int l0 = (recs[0].ast_node->exp_type->size_in_bytes) / (recs[0].ast_node->exp_type->elem_type->size_in_bytes);
+                    int l1 = (recs[2].ast_node->exp_type->size_in_bytes) / (recs[2].ast_node->exp_type->elem_type->size_in_bytes);
+                    int l = l0 < l1 ? l0 : l1;
+                    ir_variable_t *t = ir_new_temp_variable();
+                    ir_variable_t *t0 = ir_new_temp_variable();
+                    ir_variable_t *t1 = ir_new_temp_variable();
+                    ir_code_t *entry = ir_new_code_label();
+                    ir_code_t *exit = ir_new_code_label();
+                    exp->address = recs[0].ast_node->address;
+                    exp->code = ir_new_code_block();
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_op(t, ir_get_int_variable(0), NULL, "ASSIGN")
+                    );
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_op(t0, ir_get_ref_variable(recs[0].ast_node->address), NULL, "ASSIGN")
+                    );
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_op(t1, ir_get_ref_variable(recs[0].ast_node->address), NULL, "ASSIGN")
+                    );
+                    exp->code = ir_append_code(exp->code, entry);
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_relop_goto(t, ir_get_int_variable(l), ">=", exit)
+                    );
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_op(t0, t1, NULL, "DEREF_LR")
+                    );
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_op(t, t, ir_get_int_variable(1), "PLUS")
+                    );
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_op(t0, t0, ir_get_int_variable(recs[0].ast_node->exp_type->elem_type->size_in_bytes), "PLUS")
+                    );
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_op(t1, t1, ir_get_int_variable(recs[0].ast_node->exp_type->elem_type->size_in_bytes), "PLUS")
+                    );
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_goto(entry)
+                    );
+                    exp->code = ir_append_code(
+                        exp->code,
+                        exit
+                    );
+                    /*
+                    t := #0
+                    t0 := a
+                    t1 := b
+                    LABEL entry
+                    if t >= l goto exit
+                    *t0 := *t1
+                    t := t + #1
+                    t0 := t0 + #size
+                    t1 := t1 + #size
+                    goto entry
+                    LABEL exit
+                    */
+                } else {
+                    exp->address = recs[0].ast_node->address;
+                    exp->code = ir_concat_code_block(recs[2].ast_node->code, recs[0].ast_node->code);
+                    exp->code = ir_append_code(
+                        exp->code,
+                        ir_new_code_op(recs[0].ast_node->address, recs[2].ast_node->address, NULL, "ASSIGN")
+                    );
+                }
                 break;
             case 2:
             case 3:
