@@ -7,13 +7,15 @@ extern int yyparse();
 extern int yyrestart(FILE *);
 
 int parse_error = 0;
+int semantics_error = 0;
 
 int main(int argc, char const *argv[]) {
     FILE *input = NULL;
     FILE *output = stdout;
 
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s <input_file> <output_file>\n", argv[0]);
+    if (argc < 2) {
+        fprintf(stderr, "Usage: `%s <input_file> <output_file>` or\n", argv[0]);
+        fprintf(stderr, "Usage: `%s <input_file>`, this format will output ir to stdout\n", argv[0]);
         return 1;
     }
 
@@ -28,11 +30,15 @@ int main(int argc, char const *argv[]) {
 
     if (!parse_error) {
         semantics_check();
-        output = fopen(argv[2], "w");
-        if (!output) {
-            cmm2ir();
+        if (!semantics_error) {
+            output = fopen(argv[2], "w");
+            if (!output) {
+                cmm2ir();
+            }
+            cmm2ir_and_dump(output);
+        } else {
+            fprintf(stdout, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
         }
-        cmm2ir_and_dump(output);
     }
 
     return 0;

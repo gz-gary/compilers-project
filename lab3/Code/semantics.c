@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+extern int semantics_error;
+
 static int scope_depth = 0;
 
 static type_t* handle_specifier(ast_node_t *specifier);
@@ -45,6 +47,9 @@ static void handle_deflist(ast_node_t *deflist, type_t *upper_struct) {
 
             const char *name;
             type_t *type = handle_vardec(spec_type, vardec, &name);
+            if (type->primitive == PRIM_ARRAY && type->elem_type->primitive == PRIM_ARRAY) {
+                semantics_error = 1;
+            }
             if (!upper_struct && (type->primitive == PRIM_ARRAY || type->primitive == PRIM_STRUCT)) {
                 struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
                 temp->name = name;
@@ -207,6 +212,9 @@ static void handle_extdef(ast_node_t *extdef) {
                 ast_node_t *vardec = ast_1st_child(extdeclist);
                 const char *name;
                 type_t *type = handle_vardec(spec_type, vardec, &name);
+                if (type->primitive == PRIM_ARRAY && type->elem_type->primitive == PRIM_ARRAY) {
+                    semantics_error = 1;
+                }
                 // redefine check
                 if (symbtable_query_entry(name)) {
                     log_semantics_error_prologue("3", vardec->lineno);
@@ -242,6 +250,10 @@ static void handle_extdef(ast_node_t *extdef) {
                     const char *param_name;
                     type_t *param_spec_type = handle_specifier(param_spec);
                     type_t *param_type = handle_vardec(param_spec_type, vardec, &param_name);
+                    // check array type, 不允许一维数组
+                    if (param_type->primitive == PRIM_ARRAY) {
+                        semantics_error = 1;
+                    }
 
                     {
                         struct ir_dec_t *temp = malloc(sizeof(struct ir_dec_t));
