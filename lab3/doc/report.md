@@ -33,6 +33,42 @@
   - 在`ir_code_block_t`中实现了链表数据结构，来存储一个非终结符的所有`ir_code_t`
 - 最后交给`ir_dump`函数输出`AST_NODE_Program`的ir代码，即整个程序的ir代码
 
+### **if-else和while的翻译**
+- 因与课本略有不同，故详细说明，我们的实现方案为布尔表达式节省一个label，但是多使用了一个临时变量
+- **布尔表达式的处理**
+  - 我们的写法为将一个布尔表达式作为一个值来求值处理，并且申请一个**新的临时变量来代表布尔表达式的t/f**，同时我们不使用true/false的label跳转
+  - 实现方式为在条件跳转`relop_goto`的ir前为临时变量赋值1
+  - 如果条件成立，则条件跳过临时变量赋值为0的语句，直接跳转到后面的ir块
+  - 如果不成立，则临时变量赋值为0，赋值之后继续执行后面的ir块
+- **if语句的翻译**
+  - 同样的，我们先对布尔表达式进行翻译，得到存储布尔表达式值的临时变量
+  - 无else的情况
+    - 我们为false的情况申请一个label，为`false_branch`
+    - 最终本非终结变量`stmt`的ir代码按顺序列出如下：
+      >- 布尔表达式的ir代码  
+      >- 子Stmt的ir代码  
+      >- label false_branch  
+    - 从而实现了if语句的翻译
+  - 有else的情况
+    - 我们为false的情况（此处即指向else分支）申请一个label，为`false_branch`，为离开if-else结构申请一个label，为`go_out`
+    - 最终本非终结变量`stmt`的ir代码按顺序列出如下：
+      >- 布尔表达式的ir代码  
+      >- if分支Stmt的ir代码  
+      >- 无条件跳转至 go_out 的ir代码(因不用执行else分支)  
+      >- label false_branch  
+      >- else分支Stmt的ir代码  
+      >- label go_out
+    - 从而实现了if-else语句的翻译
+- **while语句的翻译**
+  - 我们为while的代码最开头申请一个label `very_begin`，为离开while结构申请一个label `go_out`.
+  - 最终本非终结变量`stmt`的ir代码按顺序列出如下：
+    >- label very_begin  
+    >- 布尔表达式的ir代码    
+    >- 条件跳转至 go_out 的ir代码   
+    >- 子Stmt的ir代码    
+    >- 无条件跳转至 very_begin 的ir代码(因需要重新判断while条件)  
+    >- label go_out
+
 ### **模块介绍**
 
 #### `ir模块(ir.h/.c)`

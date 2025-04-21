@@ -34,8 +34,9 @@ int main(int argc, char const *argv[]) {
             output = fopen(argv[2], "w");
             if (!output) {
                 cmm2ir();
+            } else {
+                cmm2ir_and_dump(output);
             }
-            cmm2ir_and_dump(output);
         } else {
             fprintf(stdout, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
         }
