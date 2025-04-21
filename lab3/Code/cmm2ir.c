@@ -159,7 +159,7 @@ static void handle_exp(ast_node_t *exp) {
                     );
                     exp->code = ir_append_code(
                         exp->code,
-                        ir_new_code_op(t1, ir_get_ref_variable(recs[0].ast_node->address), NULL, "ASSIGN")
+                        ir_new_code_op(t1, ir_get_ref_variable(recs[2].ast_node->address), NULL, "ASSIGN")
                     );
                     exp->code = ir_append_code(exp->code, entry);
                     exp->code = ir_append_code(
