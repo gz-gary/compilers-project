@@ -1,0 +1,8 @@
+int main() {
+    struct Point {
+        int x, y;
+    } p1, p2;
+    int a[5];
+    a[0] = 1;
+    p1.x = a[2];
+}

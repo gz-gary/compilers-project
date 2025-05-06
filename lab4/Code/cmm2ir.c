@@ -1,3 +1,4 @@
+#include "asm.h"
 #include "ast.h"
 #include "production.h"
 #include <stdio.h>
@@ -5,7 +6,7 @@
 #include <string.h>
 #include <assert.h>
 
-FILE *output_file = NULL;
+static FILE *output_file = NULL;
 
 static struct ir_dec_t *current_param_head = NULL;
 
@@ -862,6 +863,10 @@ static void handle_program(ast_node_t *program) {
         output_file = stdout;
     }
     ir_dump(output_file, extdeflist->code);
+
+    ir2asm(extdeflist->code);
+    asm_set_output_file(NULL);
+    asm_dump();
 }
 
 static void handle_args(ast_node_t *args) {
