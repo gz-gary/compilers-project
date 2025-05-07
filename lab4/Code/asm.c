@@ -426,6 +426,45 @@ void ir2asm(ir_code_block_t *block) {
                             if (src1_reg->used_by == -2) asm_free_reg(src1_reg);
                             if (src2_reg->used_by == -2) asm_free_reg(src2_reg);
                             // asm_free_reg(dest_idx);
+                        } else if (!strcmp(inside->op_name, "NEG")) {
+                            int dest_idx = asm_query_var_idx(inside->result->name);
+                            asm_alloc_reg4var(dest_idx, 0);
+                            asm_reg_t *dest_reg = vars[dest_idx].reg;
+                            asm_reg_t *src_reg;
+                            switch (inside->op1->name[0]) {
+                            case '#':
+                                src_reg = asm_alloc_reg4imm(ir_parse_imm(inside->op1->name));
+                                break;
+                            case '&':
+                                break;
+                            default:
+                                src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->op1->name), 1);
+                                break;
+                            }
+                            asm_append_code(asm_new_code_sub(dest_reg, reg_zero, src_reg));
+                            if (src_reg->used_by == -2) asm_free_reg(src_reg);
+                            // asm_free_reg(dest_idx);
+                        } else if (!strcmp(inside->op_name, "POS")) {
+                            int dest_idx = asm_query_var_idx(inside->result->name);
+                            asm_alloc_reg4var(dest_idx, 0);
+                            asm_reg_t *dest_reg = vars[dest_idx].reg;
+                            asm_reg_t *src_reg;
+                            switch (inside->op1->name[0]) {
+                            case '#':
+                                src_reg = asm_alloc_reg4imm(ir_parse_imm(inside->op1->name));
+                                break;
+                            case '&':
+                                break;
+                            default:
+                                src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->op1->name), 1);
+                                break;
+                            }
+                            asm_append_code(asm_new_code_move(dest_reg, src_reg));
+                            if (src_reg->used_by == -2) asm_free_reg(src_reg);
+                            // asm_free_reg(dest_idx);
+                        } else if (!strcmp(inside->op_name, "DEREF_R")) {
+                        } else if (!strcmp(inside->op_name, "DEREF_L")) {
+                        } else if (!strcmp(inside->op_name, "DEREF_LR")) {
                         }
 
                         break;
