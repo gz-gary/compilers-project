@@ -173,6 +173,12 @@ static asm_code_t *asm_new_code_sub(asm_reg_t *sub_reg_dest, asm_reg_t *sub_reg_
     code->sub_reg_src2 = sub_reg_src2;
     return code;
 }
+static asm_code_t *asm_new_code_j(const char *j_id) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_j;
+    code->j_id = j_id;
+    return code;
+}
 
 static void asm_append_code(asm_code_t *code) {
     tail->next = code;
@@ -463,13 +469,27 @@ void ir2asm(ir_code_block_t *block) {
                             if (src_reg->used_by == -2) asm_free_reg(src_reg);
                             // asm_free_reg(dest_idx);
                         } else if (!strcmp(inside->op_name, "DEREF_R")) {
+                            asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->result->name), 0);
+                            asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->op1->name), 1);
+                            asm_append_code(asm_new_code_lw(dest_reg, 0, src_reg));
                         } else if (!strcmp(inside->op_name, "DEREF_L")) {
+                            asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->result->name), 1);
+                            asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->op1->name), 1);
+                            asm_append_code(asm_new_code_sw(src_reg, 0, dest_reg));
                         } else if (!strcmp(inside->op_name, "DEREF_LR")) {
+                            asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->result->name), 1);
+                            asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->op1->name), 1);
+                            asm_reg_t *middle_reg = asm_alloc_reg();
+                            asm_append_code(asm_new_code_lw(middle_reg, 0, src_reg));
+                            asm_append_code(asm_new_code_sw(middle_reg, 0, dest_reg));
                         }
 
                         break;
                     case IR_LABEL:
                         asm_append_code(asm_new_code_tag(inside->label_name));
+                        break;
+                    case IR_GOTO:
+                        asm_append_code(asm_new_code_j(inside->goto_dest->label_name));
                         break;
                     }
                     inside = inside->next;
