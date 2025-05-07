@@ -53,7 +53,8 @@ static asm_reg_t *asm_reg_init() {
         regs[i].used_by = -1;
     }
     asm_reg_t* regs_unavailable[] = {
-        reg_zero, reg_at, reg_sp, reg_ra, reg_gp, reg_k0, reg_k1,
+        reg_v0, reg_v1,
+        reg_zero, reg_at, reg_sp, reg_fp, reg_ra, reg_gp, reg_k0, reg_k1,
         reg_a0, reg_a1, reg_a2, reg_a3
     };
     for (int i = 0; i < sizeof(regs_unavailable) / sizeof(asm_reg_t*); ++i) regs_unavailable[i]->available = 0;
@@ -177,6 +178,60 @@ static asm_code_t *asm_new_code_j(const char *j_id) {
     asm_code_t *code = asm_new_code();
     code->instr = MIPS32_j;
     code->j_id = j_id;
+    return code;
+}
+static asm_code_t *asm_new_code_beq(asm_reg_t *beq_reg_src1, asm_reg_t *beq_reg_src2, const char *beq_id) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_beq;
+    code->beq_id = beq_id;
+    code->beq_reg_src1 = beq_reg_src1;
+    code->beq_reg_src2 = beq_reg_src2;
+    code->beq_id = beq_id;
+    return code;
+}
+static asm_code_t *asm_new_code_bne(asm_reg_t *bne_reg_src1, asm_reg_t *bne_reg_src2, const char *bne_id) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_bne;
+    code->bne_id = bne_id;
+    code->bne_reg_src1 = bne_reg_src1;
+    code->bne_reg_src2 = bne_reg_src2;
+    code->bne_id = bne_id;
+    return code;
+}
+static asm_code_t *asm_new_code_bgt(asm_reg_t *bgt_reg_src1, asm_reg_t *bgt_reg_src2, const char *bgt_id) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_bgt;
+    code->bgt_id = bgt_id;
+    code->bgt_reg_src1 = bgt_reg_src1;
+    code->bgt_reg_src2 = bgt_reg_src2;
+    code->bgt_id = bgt_id;
+    return code;
+}
+static asm_code_t *asm_new_code_blt(asm_reg_t *blt_reg_src1, asm_reg_t *blt_reg_src2, const char *blt_id) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_blt;
+    code->blt_id = blt_id;
+    code->blt_reg_src1 = blt_reg_src1;
+    code->blt_reg_src2 = blt_reg_src2;
+    code->blt_id = blt_id;
+    return code;
+}
+static asm_code_t *asm_new_code_bge(asm_reg_t *bge_reg_src1, asm_reg_t *bge_reg_src2, const char *bge_id) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_bge;
+    code->bge_id = bge_id;
+    code->bge_reg_src1 = bge_reg_src1;
+    code->bge_reg_src2 = bge_reg_src2;
+    code->bge_id = bge_id;
+    return code;
+}
+static asm_code_t *asm_new_code_ble(asm_reg_t *ble_reg_src1, asm_reg_t *ble_reg_src2, const char *ble_id) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_ble;
+    code->ble_id = ble_id;
+    code->ble_reg_src1 = ble_reg_src1;
+    code->ble_reg_src2 = ble_reg_src2;
+    code->ble_id = ble_id;
     return code;
 }
 
@@ -490,6 +545,47 @@ void ir2asm(ir_code_block_t *block) {
                         break;
                     case IR_GOTO:
                         asm_append_code(asm_new_code_j(inside->goto_dest->label_name));
+                        break;
+                    case IR_RELOP_GOTO:
+                        {
+                            asm_reg_t *src1_reg;
+                            asm_reg_t *src2_reg;
+                            switch (inside->relop1->name[0]) {
+                            case '#':
+                                src1_reg = asm_alloc_reg4imm(ir_parse_imm(inside->relop1->name));
+                                break;
+                            case '&':
+                                break;
+                            default:
+                                src1_reg = asm_alloc_reg4var(asm_query_var_idx(inside->relop1->name), 1);
+                                break;
+                            }
+                            switch (inside->relop2->name[0]) {
+                            case '#':
+                                src2_reg = asm_alloc_reg4imm(ir_parse_imm(inside->relop2->name));
+                                break;
+                            case '&':
+                                break;
+                            default:
+                                src2_reg = asm_alloc_reg4var(asm_query_var_idx(inside->relop2->name), 1);
+                                break;
+                            }
+                            if (!strcmp(inside->relop_name, "==")) {
+                                asm_append_code(asm_new_code_beq(src1_reg, src2_reg, inside->relop_goto_dest->label_name));
+                            } else if (!strcmp(inside->relop_name, "!=")) {
+                                asm_append_code(asm_new_code_bne(src1_reg, src2_reg, inside->relop_goto_dest->label_name));
+                            } else if (!strcmp(inside->relop_name, ">")) {
+                                asm_append_code(asm_new_code_bgt(src1_reg, src2_reg, inside->relop_goto_dest->label_name));
+                            } else if (!strcmp(inside->relop_name, "<")) {
+                                asm_append_code(asm_new_code_blt(src1_reg, src2_reg, inside->relop_goto_dest->label_name));
+                            } else if (!strcmp(inside->relop_name, ">=")) {
+                                asm_append_code(asm_new_code_bge(src1_reg, src2_reg, inside->relop_goto_dest->label_name));
+                            } else if (!strcmp(inside->relop_name, "<=")) {
+                                asm_append_code(asm_new_code_ble(src1_reg, src2_reg, inside->relop_goto_dest->label_name));
+                            }
+                            if (src1_reg->used_by == -2) asm_free_reg(src1_reg);
+                            if (src2_reg->used_by == -2) asm_free_reg(src2_reg);
+                        }
                         break;
                     }
                     inside = inside->next;
