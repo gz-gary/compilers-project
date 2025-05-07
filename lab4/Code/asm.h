@@ -29,8 +29,9 @@ enum MIPS32_instr {
 
 struct asm_reg_t {
     const char *alias;
-    ir_variable_t* var;
-    int used;
+    int used_by;
+    int available;
+    int timestamp;
 };
 typedef struct asm_reg_t asm_reg_t;
 
