@@ -247,6 +247,11 @@ static asm_code_t *asm_new_code_ble(asm_reg_t *ble_reg_src1, asm_reg_t *ble_reg_
     code->ble_id = ble_id;
     return code;
 }
+static asm_code_t *asm_new_code_dummy() {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_dummy;
+    return code;
+}
 
 static void asm_append_code(asm_code_t *code) {
     tail->next = code;
@@ -430,6 +435,7 @@ void ir2asm(ir_code_block_t *block) {
                                 asm_alloc_reg4var(src_idx, 1);
                                 asm_append_code(asm_new_code_move(vars[dest_idx].reg, vars[src_idx].reg));
                             }
+                            asm_append_code(asm_new_code_dummy());
                             // asm_free_reg(vars[dest_idx].reg);
                         } else if (!strcmp(inside->op_name, "PLUS")) {
                             int dest_idx = asm_query_var_idx(inside->result->name);
@@ -459,6 +465,7 @@ void ir2asm(ir_code_block_t *block) {
                                 break;
                             }
                             if (src1_reg->used_by == -2) asm_free_reg(src1_reg);
+                            asm_append_code(asm_new_code_dummy());
                             // asm_free_reg(dest_idx);
                         } else if (!strcmp(inside->op_name, "MINUS")) {
                             int dest_idx = asm_query_var_idx(inside->result->name);
@@ -488,6 +495,7 @@ void ir2asm(ir_code_block_t *block) {
                                 break;
                             }
                             if (src1_reg->used_by == -2) asm_free_reg(src1_reg);
+                            asm_append_code(asm_new_code_dummy());
                             // asm_free_reg(dest_idx);
                         } else if (!strcmp(inside->op_name, "MULT")) {
                             int dest_idx = asm_query_var_idx(inside->result->name);
@@ -517,6 +525,7 @@ void ir2asm(ir_code_block_t *block) {
                             asm_append_code(asm_new_code_mul(dest_reg, src1_reg, src2_reg));
                             if (src1_reg->used_by == -2) asm_free_reg(src1_reg);
                             if (src2_reg->used_by == -2) asm_free_reg(src2_reg);
+                            asm_append_code(asm_new_code_dummy());
                             // asm_free_reg(dest_idx);
                         } else if (!strcmp(inside->op_name, "DIV")) {
                             int dest_idx = asm_query_var_idx(inside->result->name);
@@ -547,6 +556,7 @@ void ir2asm(ir_code_block_t *block) {
                             asm_append_code(asm_new_code_mflo(dest_reg));
                             if (src1_reg->used_by == -2) asm_free_reg(src1_reg);
                             if (src2_reg->used_by == -2) asm_free_reg(src2_reg);
+                            asm_append_code(asm_new_code_dummy());
                             // asm_free_reg(dest_idx);
                         } else if (!strcmp(inside->op_name, "NEG")) {
                             int dest_idx = asm_query_var_idx(inside->result->name);
@@ -565,6 +575,7 @@ void ir2asm(ir_code_block_t *block) {
                             }
                             asm_append_code(asm_new_code_sub(dest_reg, reg_zero, src_reg));
                             if (src_reg->used_by == -2) asm_free_reg(src_reg);
+                            asm_append_code(asm_new_code_dummy());
                             // asm_free_reg(dest_idx);
                         } else if (!strcmp(inside->op_name, "POS")) {
                             int dest_idx = asm_query_var_idx(inside->result->name);
@@ -583,21 +594,25 @@ void ir2asm(ir_code_block_t *block) {
                             }
                             asm_append_code(asm_new_code_move(dest_reg, src_reg));
                             if (src_reg->used_by == -2) asm_free_reg(src_reg);
+                            asm_append_code(asm_new_code_dummy());
                             // asm_free_reg(dest_idx);
                         } else if (!strcmp(inside->op_name, "DEREF_R")) {
                             asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->result->name), 0);
                             asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->op1->name), 1);
                             asm_append_code(asm_new_code_lw(dest_reg, 0, src_reg));
+                            asm_append_code(asm_new_code_dummy());
                         } else if (!strcmp(inside->op_name, "DEREF_L")) {
                             asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->result->name), 1);
                             asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->op1->name), 1);
                             asm_append_code(asm_new_code_sw(src_reg, 0, dest_reg));
+                            asm_append_code(asm_new_code_dummy());
                         } else if (!strcmp(inside->op_name, "DEREF_LR")) {
                             asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->result->name), 1);
                             asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->op1->name), 1);
                             asm_reg_t *middle_reg = asm_alloc_reg();
                             asm_append_code(asm_new_code_lw(middle_reg, 0, src_reg));
                             asm_append_code(asm_new_code_sw(middle_reg, 0, dest_reg));
+                            asm_append_code(asm_new_code_dummy());
                         }
 
                         break;
@@ -606,6 +621,7 @@ void ir2asm(ir_code_block_t *block) {
                         break;
                     case IR_GOTO:
                         asm_append_code(asm_new_code_j(inside->goto_dest->label_name));
+                        asm_append_code(asm_new_code_dummy());
                         break;
                     case IR_RELOP_GOTO:
                         {
@@ -646,6 +662,7 @@ void ir2asm(ir_code_block_t *block) {
                             }
                             if (src1_reg->used_by == -2) asm_free_reg(src1_reg);
                             if (src2_reg->used_by == -2) asm_free_reg(src2_reg);
+                            asm_append_code(asm_new_code_dummy());
                         }
                         break;
                     case IR_READ:
@@ -653,6 +670,7 @@ void ir2asm(ir_code_block_t *block) {
                             asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->read_var->name), 0);
                             asm_append_code(asm_new_code_jal("read"));
                             asm_append_code(asm_new_code_move(dest_reg, reg_v0));
+                            asm_append_code(asm_new_code_dummy());
                         }
                         break;
                     case IR_WRITE:
@@ -660,6 +678,7 @@ void ir2asm(ir_code_block_t *block) {
                             asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->write_var->name), 1);
                             asm_append_code(asm_new_code_move(reg_a0, src_reg));
                             asm_append_code(asm_new_code_jal("write"));
+                            asm_append_code(asm_new_code_dummy());
                         }
                         break;
                     case IR_RETURN:
@@ -678,6 +697,7 @@ void ir2asm(ir_code_block_t *block) {
                             asm_append_code(asm_new_code_move(reg_v0, ret_reg));
                             if (ret_reg->used_by == -2) asm_free_reg(ret_reg);
                             asm_append_code(asm_new_code_j(exit_name));
+                            asm_append_code(asm_new_code_dummy());
                         }
                         break;
                     case IR_ARG:
@@ -732,6 +752,7 @@ void ir2asm(ir_code_block_t *block) {
                             /* 7. save return value */
                             asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->call_result->name), 0);
                             asm_append_code(asm_new_code_move(dest_reg, reg_v0));
+                            asm_append_code(asm_new_code_dummy());
 
                             arg_count = 0;
                         }
@@ -757,6 +778,7 @@ void ir2asm(ir_code_block_t *block) {
                     top = asm_insert_code(top, asm_new_code_sw(callee_saved[i], stack_size+j*4, reg_sp));
                     ++j;
                 }
+                top = asm_insert_code(top, asm_new_code_dummy());
 
                 asm_append_code(exit_point);
                 /* function epilogue */
@@ -773,6 +795,7 @@ void ir2asm(ir_code_block_t *block) {
                 asm_append_code(asm_new_code_lw(reg_ra, -(ra_size+fp_size), reg_sp));
                 /* 5. return */
                 asm_append_code(asm_new_code_jr(reg_ra));
+                asm_append_code(asm_new_code_dummy());
             }
             break;
         default:
@@ -813,6 +836,7 @@ jr $ra\n\n");
     while (code != NULL) {
         switch (code->instr) {
             case MIPS32_dummy:
+                fprintf(output_file, "\n");
                 break;
             case MIPS32_tag:
                 fprintf(output_file, "%s:\n", code->tag_id);

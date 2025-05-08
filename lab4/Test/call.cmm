@@ -1,18 +1,18 @@
-int add(int a, int b, int c, int d) {
+int f(int a, int b, int c, int d) {
     return a + b + c + d + 1;
 }
 
-int mul(int o, int p, int q, int r, int s) {
+int g(int o, int p, int q, int r, int s) {
     return o * p * q * r * s;
 }
 
 int main() {
-    int x = 0, y = 0, z = 0;
-    x = y + z;
-    z = x + y;
-    y = x + z;
-    x = x * z;
-    y = y * x;
-    mul(x, y, z, x, y);
+    int x = 1, y = 2, z = 3, result;
+    x = y + z; x = 5;
+    z = x + y; z = 7;
+    y = x + z; y = 12;
+    x = x * z; x = 35;
+    y = y * x; y = 420;
+    result = f(x, y, z, x) + g(x, y, z, x, y);
     return 0;
 }
