@@ -371,11 +371,18 @@ void ir2asm(ir_code_block_t *block) {
         switch (code->type) {
         case IR_FUNDEC:
             {
-                asm_code_t *top = asm_new_code_tag(code->fun_name);
+                char *entry_name;
+                if (!strcmp(code->fun_name, "main")) entry_name = code->fun_name;
+                else  {
+                    entry_name = calloc(snprintf(NULL, 0, "%s_entry", code->fun_name)+1, sizeof(char));
+                    sprintf(entry_name, "%s_entry", code->fun_name);
+                }
+                asm_code_t *top = asm_new_code_tag(entry_name);
                 asm_append_code(top);
                 char *exit_name = calloc(snprintf(NULL, 0, "%s_exit", code->fun_name)+1,sizeof(char));
                 sprintf(exit_name, "%s_exit", code->fun_name);
                 asm_code_t *exit_point = asm_new_code_tag(exit_name);
+                code->fun_name = entry_name;
 
                 asm_reg_init();
                 asm_init_vars();
@@ -787,7 +794,13 @@ void ir2asm(ir_code_block_t *block) {
                                 asm_append_code(asm_new_code_sw(arg_regs[arg_count-i], (i-5)*4, reg_sp));
                             }
                             /* 4. call */
-                            asm_append_code(asm_new_code_jal(inside->call_name));
+                            char *call_name;
+                            if (!strcmp(inside->call_name, "main")) call_name = inside->call_name;
+                            else {
+                                call_name = calloc(snprintf(NULL, 0, "%s_entry", inside->call_name)+1, sizeof(char));
+                                sprintf(call_name, "%s_entry", inside->call_name);
+                            }
+                            asm_append_code(asm_new_code_jal(call_name));
                             /* 5. collapse stack */
                             asm_append_code(asm_new_code_addi(reg_sp, reg_sp, saved_size+args_size));
                             /* 6. restore caller saved */
