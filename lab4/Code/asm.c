@@ -180,6 +180,12 @@ static asm_code_t *asm_new_code_j(const char *j_id) {
     code->j_id = j_id;
     return code;
 }
+static asm_code_t *asm_new_code_jal(const char *jal_id) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_jal;
+    code->jal_id = jal_id;
+    return code;
+}
 static asm_code_t *asm_new_code_beq(asm_reg_t *beq_reg_src1, asm_reg_t *beq_reg_src2, const char *beq_id) {
     asm_code_t *code = asm_new_code();
     code->instr = MIPS32_beq;
@@ -585,6 +591,20 @@ void ir2asm(ir_code_block_t *block) {
                             }
                             if (src1_reg->used_by == -2) asm_free_reg(src1_reg);
                             if (src2_reg->used_by == -2) asm_free_reg(src2_reg);
+                        }
+                        break;
+                    case IR_READ:
+                        {
+                            asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->read_var->name), 0);
+                            asm_append_code(asm_new_code_jal("read"));
+                            asm_append_code(asm_new_code_move(dest_reg, reg_v0));
+                        }
+                        break;
+                    case IR_WRITE:
+                        {
+                            asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->write_var->name), 1);
+                            asm_append_code(asm_new_code_move(reg_a0, src_reg));
+                            asm_append_code(asm_new_code_jal("write"));
                         }
                         break;
                     }
