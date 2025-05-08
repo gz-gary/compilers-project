@@ -862,11 +862,8 @@ static void handle_program(ast_node_t *program) {
     if (output_file == NULL) {
         output_file = stdout;
     }
-    ir_dump(output_file, extdeflist->code);
-
+    // ir_dump(output_file, extdeflist->code);
     ir2asm(extdeflist->code);
-    asm_set_output_file(NULL);
-    asm_dump();
 }
 
 static void handle_args(ast_node_t *args) {

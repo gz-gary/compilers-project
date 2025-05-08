@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "semantics.h"
 #include "cmm2ir.h"
+#include "asm.h"
 
 extern int yyparse();
 extern int yyrestart(FILE *);
@@ -32,11 +33,9 @@ int main(int argc, char const *argv[]) {
         semantics_check();
         if (!semantics_error) {
             output = fopen(argv[2], "w");
-            if (!output) {
-                cmm2ir();
-            } else {
-                cmm2ir_and_dump(output);
-            }
+            cmm2ir();
+            asm_set_output_file(output);
+            asm_dump();
         } else {
             fprintf(stdout, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
         }
