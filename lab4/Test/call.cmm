@@ -5,3 +5,14 @@ int add(int a, int b, int c, int d) {
 int mul(int o, int p, int q, int r, int s) {
     return o * p * q * r * s;
 }
+
+int main() {
+    int x = 0, y = 0, z = 0;
+    x = y + z;
+    z = x + y;
+    y = x + z;
+    x = x * z;
+    y = y * x;
+    mul(x, y, z, x, y);
+    return 0;
+}

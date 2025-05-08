@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 static int ir_parse_imm(const char *str) {
     int imm;
@@ -350,8 +351,6 @@ static asm_reg_t* asm_alloc_reg4ref(int offset) {
 
 
 void ir2asm(ir_code_block_t *block) {
-    asm_reg_init();
-
     ir_code_t *code = block->first;
     while (code != NULL) {
         switch (code->type) {
@@ -359,7 +358,11 @@ void ir2asm(ir_code_block_t *block) {
             {
                 asm_code_t *top = asm_new_code_tag(code->fun_name);
                 asm_append_code(top);
+                char *exit_name = calloc(snprintf(NULL, 0, "%s_exit", code->fun_name)+1,sizeof(char));
+                sprintf(exit_name, "%s_exit", code->fun_name);
+                asm_code_t *exit_point = asm_new_code_tag(exit_name);
 
+                asm_reg_init();
                 asm_init_vars();
                 stack_size = 0;
                 int param_count = 0;
@@ -368,10 +371,10 @@ void ir2asm(ir_code_block_t *block) {
                     if (inside->type == IR_PARAM) {
                         if (param_count < 4) {
                             vars[var_len].var = inside->param_var->name;
-                            if (param_count == 0) vars[var_len].reg = reg_a0;
-                            else if (param_count == 1) vars[var_len].reg = reg_a1;
-                            else if (param_count == 2) vars[var_len].reg = reg_a2;
-                            else if (param_count == 3) vars[var_len].reg = reg_a3;
+                            if (param_count == 0) { vars[var_len].reg = reg_a0; reg_a0->used_by = var_len; }
+                            else if (param_count == 1) { vars[var_len].reg = reg_a1; reg_a1->used_by = var_len; }
+                            else if (param_count == 2) { vars[var_len].reg = reg_a2; reg_a2->used_by = var_len; }
+                            else if (param_count == 3) { vars[var_len].reg = reg_a3; reg_a3->used_by = var_len; }
                             ++var_len;
                         } else {
                             vars[var_len].var = inside->param_var->name;
@@ -386,6 +389,9 @@ void ir2asm(ir_code_block_t *block) {
                         if (inside->op1) asm_add_var(inside->op1->name, 4);
                         if (inside->op2) asm_add_var(inside->op2->name, 4);
                         if (inside->result) asm_add_var(inside->result->name, 4);
+                    }
+                    if (inside->type == IR_CALL) {
+                        if (inside->call_result) asm_add_var(inside->call_result->name, 4);
                     }
                     inside = inside->next;
                 }
@@ -404,6 +410,9 @@ void ir2asm(ir_code_block_t *block) {
                     inside = inside->next;
                 }
 
+                int arg_count = 0;
+                static const char *arg_names[100];
+                static asm_reg_t *arg_regs[100];
                 inside = code->next;
                 while (inside != NULL && inside->type != IR_FUNDEC) {
                     switch (inside->type) {
@@ -666,17 +675,65 @@ void ir2asm(ir_code_block_t *block) {
                                 ret_reg = asm_alloc_reg4var(asm_query_var_idx(inside->ret_var->name), 1);
                                 break;
                             }
-                            /* function epilogue */
-                            /* 1. stack collapse */
-                            asm_append_code(asm_new_code_move(reg_sp, reg_fp));
-                            /* 2. restore $ra */
-                            asm_append_code(asm_new_code_lw(reg_ra, -(ra_size+fp_size), reg_sp));
-                            /* 3. restore $fp */
-                            asm_append_code(asm_new_code_lw(reg_fp, -fp_size, reg_sp));
-                            /* 4. return */
                             asm_append_code(asm_new_code_move(reg_v0, ret_reg));
-                            asm_append_code(asm_new_code_jr(reg_ra));
                             if (ret_reg->used_by == -2) asm_free_reg(ret_reg);
+                            asm_append_code(asm_new_code_j(exit_name));
+                        }
+                        break;
+                    case IR_ARG:
+                        {
+                            arg_names[arg_count] = inside->arg_var->name;
+                            ++arg_count;
+                        }
+                        break;
+                    case IR_CALL:
+                        {
+                            for (int i = 0; i < arg_count; ++i) {
+                                if (arg_names[i][0] == '#') arg_regs[i] = asm_alloc_reg4imm(ir_parse_imm(arg_names[i]));
+                                else arg_regs[i] = asm_alloc_reg4var(asm_query_var_idx(arg_names[i]), 1);
+                            }
+                            /* call prologue */
+
+                            asm_reg_t *caller_saved[] = {reg_t0, reg_t1, reg_t2, reg_t3, reg_t4, reg_t5, reg_t6, reg_t7, reg_t8, reg_t9, reg_a0, reg_a1, reg_a2, reg_a3};
+                            int saved_size = 0;
+                            for (int i = 0; i < sizeof(caller_saved) / sizeof(asm_reg_t*); ++i) if (caller_saved[i]->used_by >= 0) saved_size += 4;
+
+                            int args_size = ((arg_count>=4)?(arg_count-4):0)*4;
+                            /* 1. allocate stack */
+                            asm_append_code(asm_new_code_addi(reg_sp, reg_sp, -(saved_size+args_size)));
+                            /* 2. save caller saved */
+                            for (int i = 0, j = 0; i < sizeof(caller_saved) / sizeof(asm_reg_t*); ++i) if (caller_saved[i]->used_by >= 0) {
+                                asm_append_code(asm_new_code_sw(caller_saved[i], args_size+j*4, reg_sp));
+                                ++j;
+                            }
+                            /* 3. set arguments */
+                            if (arg_count >= 1) asm_append_code(asm_new_code_move(reg_a0, arg_regs[arg_count-1]));
+                            if (arg_count >= 2) asm_append_code(asm_new_code_move(reg_a1, arg_regs[arg_count-2]));
+                            if (arg_count >= 3) asm_append_code(asm_new_code_move(reg_a2, arg_regs[arg_count-3]));
+                            if (arg_count >= 4) asm_append_code(asm_new_code_move(reg_a3, arg_regs[arg_count-4]));
+                            for (int i = 5; i <= arg_count; ++i) {
+                                asm_append_code(asm_new_code_sw(arg_regs[arg_count-i], (i-5)*4, reg_sp));
+                            }
+                            /* free registers for constant */
+                            for (int i = 0; i < arg_count; ++i) {
+                                if (arg_regs[i]->used_by == -2) {
+                                    asm_free_reg(arg_regs[i]);
+                                }
+                            }
+                            /* 4. call */
+                            asm_append_code(asm_new_code_jal(inside->call_name));
+                            /* 5. collapse stack */
+                            asm_append_code(asm_new_code_addi(reg_sp, reg_sp, saved_size+args_size));
+                            /* 6. restore caller saved */
+                            for (int i = 0, j = 0; i < sizeof(caller_saved) / sizeof(asm_reg_t*); ++i) if (caller_saved[i]->used_by >= 0) {
+                                asm_append_code(asm_new_code_lw(caller_saved[i], -saved_size+j*4, reg_sp));
+                                ++j;
+                            }
+                            /* 7. save return value */
+                            asm_reg_t *dest_reg = asm_alloc_reg4var(asm_query_var_idx(inside->call_result->name), 0);
+                            asm_append_code(asm_new_code_move(dest_reg, reg_v0));
+
+                            arg_count = 0;
                         }
                         break;
                     }
@@ -700,6 +757,22 @@ void ir2asm(ir_code_block_t *block) {
                     top = asm_insert_code(top, asm_new_code_sw(callee_saved[i], stack_size+j*4, reg_sp));
                     ++j;
                 }
+
+                asm_append_code(exit_point);
+                /* function epilogue */
+                /* 1. stack collapse */
+                asm_append_code(asm_new_code_move(reg_sp, reg_fp));
+                /* 2. restore callee saved */
+                for (int i = 0, j = 0; i < sizeof(callee_saved) / sizeof(asm_reg_t*); ++i) if (callee_saved[i]->used_by >= 0) {
+                    asm_append_code(asm_new_code_lw(callee_saved[i], -(saved_size+ra_size+fp_size)+j*4, reg_sp));
+                    ++j;
+                }
+                /* 3. restore $fp */
+                asm_append_code(asm_new_code_lw(reg_fp, -fp_size, reg_sp));
+                /* 4. restore $ra */
+                asm_append_code(asm_new_code_lw(reg_ra, -(ra_size+fp_size), reg_sp));
+                /* 5. return */
+                asm_append_code(asm_new_code_jr(reg_ra));
             }
             break;
         default:
