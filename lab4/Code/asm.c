@@ -457,7 +457,8 @@ void ir2asm(ir_code_block_t *block) {
                             asm_append_code(asm_new_code_dummy());
                         } else if (!strcmp(inside->op_name, "PLUS")) {
                             int dest_idx = asm_query_var_idx(inside->result->name);
-                            asm_alloc_reg4var(dest_idx, 0);
+                            if (!strcmp(inside->result->name, inside->op1->name)) asm_alloc_reg4var(dest_idx, 1);
+                            else asm_alloc_reg4var(dest_idx, 0);
                             asm_reg_t *dest_reg = vars[dest_idx].reg;
                             asm_reg_t *src1_reg, *src2_reg;
                             switch (inside->op1->name[0]) {
