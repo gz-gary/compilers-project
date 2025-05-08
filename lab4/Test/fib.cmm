@@ -8,4 +8,5 @@ int main() {
         b = c;
         i = i + 1;
     }
+    return 0;
 }

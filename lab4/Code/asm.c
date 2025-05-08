@@ -180,6 +180,12 @@ static asm_code_t *asm_new_code_j(const char *j_id) {
     code->j_id = j_id;
     return code;
 }
+static asm_code_t *asm_new_code_jr(asm_reg_t *jr_reg) {
+    asm_code_t *code = asm_new_code();
+    code->instr = MIPS32_jr;
+    code->jr_reg = jr_reg;
+    return code;
+}
 static asm_code_t *asm_new_code_jal(const char *jal_id) {
     asm_code_t *code = asm_new_code();
     code->instr = MIPS32_jal;
@@ -355,8 +361,13 @@ void ir2asm(ir_code_block_t *block) {
                     inside = inside->next;
                 }
                 int stack_size = asm_query_stack_size();
+                int ra_size = 4;
 
-                asm_append_code(asm_new_code_addi(reg_sp, reg_sp, -stack_size));
+                /* function prologue */
+                /* 1. grow stack */
+                asm_append_code(asm_new_code_addi(reg_sp, reg_sp, -(stack_size+ra_size)));
+                /* 2. save $ra */
+                asm_append_code(asm_new_code_sw(reg_ra, stack_size, reg_sp));
 
                 inside = code->next;
                 while (inside != NULL) {
@@ -605,6 +616,30 @@ void ir2asm(ir_code_block_t *block) {
                             asm_reg_t *src_reg = asm_alloc_reg4var(asm_query_var_idx(inside->write_var->name), 1);
                             asm_append_code(asm_new_code_move(reg_a0, src_reg));
                             asm_append_code(asm_new_code_jal("write"));
+                        }
+                        break;
+                    case IR_RETURN:
+                        {
+                            asm_reg_t *ret_reg;
+                            switch (inside->ret_var->name[0]) {
+                            case '#':
+                                ret_reg = asm_alloc_reg4imm(ir_parse_imm(inside->ret_var->name));
+                                break;
+                            case '&':
+                                break;
+                            default:
+                                ret_reg = asm_alloc_reg4var(asm_query_var_idx(inside->ret_var->name), 1);
+                                break;
+                            }
+                            /* function epilogue */
+                            /* 1. stack collapse */
+                            asm_append_code(asm_new_code_addi(reg_sp, reg_sp, stack_size+ra_size));
+                            /* 2. restore $ra */
+                            asm_append_code(asm_new_code_lw(reg_ra, -ra_size, reg_sp));
+
+                            asm_append_code(asm_new_code_move(reg_v0, ret_reg));
+                            asm_append_code(asm_new_code_jr(reg_ra));
+                            if (ret_reg->used_by == -2) asm_free_reg(ret_reg);
                         }
                         break;
                     }
