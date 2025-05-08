@@ -1,0 +1,7 @@
+int add(int a, int b, int c, int d) {
+    return a + b + c + d + 1;
+}
+
+int mul(int o, int p, int q, int r, int s) {
+    return o * p * q * r * s;
+}

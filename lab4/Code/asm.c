@@ -252,6 +252,12 @@ static void asm_append_code(asm_code_t *code) {
     tail = code;
 }
 
+static asm_code_t* asm_insert_code(asm_code_t *pos, asm_code_t *code) {
+    code->next = pos->next;
+    pos->next = code;
+    return code;
+}
+
 
 
 static int timestamp = 0;
@@ -259,10 +265,13 @@ static struct {
     const char *var; // variable
     int offset; // offset
     int size; // size
+    int loc_by_fp;
     asm_reg_t *reg;
 } vars[10000];
+static int stack_size;
 static int var_len;
 static void asm_init_vars() {
+    for (int i = 0; i < var_len; ++i) { vars[i].reg = NULL; vars[i].loc_by_fp = 0; }
     var_len = 0;
 }
 static void asm_add_var(const char *var, int size) {
@@ -271,9 +280,11 @@ static void asm_add_var(const char *var, int size) {
         if (!strcmp(vars[i].var, var))
             return;
     vars[var_len].var = var;
-    vars[var_len].offset = var_len > 0 ? vars[var_len - 1].offset + vars[var_len - 1].size : 0;
+    vars[var_len].offset = stack_size;
     vars[var_len].size = size;
     vars[var_len].reg = NULL;
+    vars[var_len].loc_by_fp = 0;
+    stack_size += size;
     ++var_len;
 }
 static int asm_query_var_offset(const char *var) {
@@ -286,19 +297,18 @@ static int asm_query_var_idx(const char *var) {
         if (!strcmp(vars[i].var, var))
             return i;
 }
-static int asm_query_stack_size() {
-    return var_len > 0 ? vars[var_len - 1].offset + vars[var_len - 1].size : 0;
-}
 static void asm_free_reg(asm_reg_t *reg) {
     int var_idx = reg->used_by;
     if (var_idx >= 0) {
-        asm_append_code(asm_new_code_sw(reg, vars[var_idx].offset, reg_sp));
+        if (vars[var_idx].loc_by_fp) asm_append_code(asm_new_code_sw(reg, vars[var_idx].offset, reg_fp));
+        else asm_append_code(asm_new_code_sw(reg, vars[var_idx].offset, reg_sp));
         vars[var_idx].reg = NULL;
     }
     reg->used_by = -1;
 }
 static void asm_move_into_reg(asm_reg_t* reg) {
-    asm_append_code(asm_new_code_lw(reg, vars[reg->used_by].offset, reg_sp));
+    if (vars[reg->used_by].loc_by_fp) asm_append_code(asm_new_code_lw(reg, vars[reg->used_by].offset, reg_fp));
+    else asm_append_code(asm_new_code_lw(reg, vars[reg->used_by].offset, reg_sp));
 }
 static asm_reg_t* asm_alloc_reg() {
     int idx = -1;
@@ -347,11 +357,30 @@ void ir2asm(ir_code_block_t *block) {
         switch (code->type) {
         case IR_FUNDEC:
             {
-                asm_append_code(asm_new_code_tag(code->fun_name));
+                asm_code_t *top = asm_new_code_tag(code->fun_name);
+                asm_append_code(top);
 
                 asm_init_vars();
+                stack_size = 0;
+                int param_count = 0;
                 ir_code_t *inside = code->next;
-                while (inside != NULL) {
+                while (inside != NULL && inside->type != IR_FUNDEC) {
+                    if (inside->type == IR_PARAM) {
+                        if (param_count < 4) {
+                            vars[var_len].var = inside->param_var->name;
+                            if (param_count == 0) vars[var_len].reg = reg_a0;
+                            else if (param_count == 1) vars[var_len].reg = reg_a1;
+                            else if (param_count == 2) vars[var_len].reg = reg_a2;
+                            else if (param_count == 3) vars[var_len].reg = reg_a3;
+                            ++var_len;
+                        } else {
+                            vars[var_len].var = inside->param_var->name;
+                            vars[var_len].reg = NULL;
+                            vars[var_len].loc_by_fp = 1;
+                            ++var_len;
+                        }
+                        ++param_count;
+                    }
                     if (inside->type == IR_DEC) asm_add_var(inside->dec_name, inside->dec_size);
                     if (inside->type == IR_OP) {
                         if (inside->op1) asm_add_var(inside->op1->name, 4);
@@ -360,17 +389,23 @@ void ir2asm(ir_code_block_t *block) {
                     }
                     inside = inside->next;
                 }
-                int stack_size = asm_query_stack_size();
                 int ra_size = 4;
-
-                /* function prologue */
-                /* 1. grow stack */
-                asm_append_code(asm_new_code_addi(reg_sp, reg_sp, -(stack_size+ra_size)));
-                /* 2. save $ra */
-                asm_append_code(asm_new_code_sw(reg_ra, stack_size, reg_sp));
+                int fp_size = 4;
+                param_count = 0;
+                inside = code->next;
+                while (inside != NULL && inside->type != IR_FUNDEC) {
+                    if (inside->type == IR_PARAM) {
+                        if (param_count >= 4) {
+                            int idx = asm_query_var_idx(inside->param_var->name);
+                            vars[idx].offset = (param_count-4)*4;
+                        }
+                        ++param_count;
+                    }
+                    inside = inside->next;
+                }
 
                 inside = code->next;
-                while (inside != NULL) {
+                while (inside != NULL && inside->type != IR_FUNDEC) {
                     switch (inside->type) {
                     case IR_OP:
                         if (!strcmp(inside->op_name, "ASSIGN")) {
@@ -633,10 +668,12 @@ void ir2asm(ir_code_block_t *block) {
                             }
                             /* function epilogue */
                             /* 1. stack collapse */
-                            asm_append_code(asm_new_code_addi(reg_sp, reg_sp, stack_size+ra_size));
+                            asm_append_code(asm_new_code_move(reg_sp, reg_fp));
                             /* 2. restore $ra */
-                            asm_append_code(asm_new_code_lw(reg_ra, -ra_size, reg_sp));
-
+                            asm_append_code(asm_new_code_lw(reg_ra, -(ra_size+fp_size), reg_sp));
+                            /* 3. restore $fp */
+                            asm_append_code(asm_new_code_lw(reg_fp, -fp_size, reg_sp));
+                            /* 4. return */
                             asm_append_code(asm_new_code_move(reg_v0, ret_reg));
                             asm_append_code(asm_new_code_jr(reg_ra));
                             if (ret_reg->used_by == -2) asm_free_reg(ret_reg);
@@ -644,6 +681,24 @@ void ir2asm(ir_code_block_t *block) {
                         break;
                     }
                     inside = inside->next;
+                }
+                asm_reg_t *callee_saved[] = {reg_s0, reg_s1, reg_s2, reg_s3, reg_s4, reg_s5, reg_s6, reg_s7};
+                int saved_size = 0;
+                for (int i = 0; i < sizeof(callee_saved) / sizeof(asm_reg_t*); ++i) if (callee_saved[i]->used_by >= 0) saved_size += 4;
+
+                /* function prologue */
+                /* 1. save $ra */
+                top = asm_insert_code(top, asm_new_code_sw(reg_ra, -(ra_size+fp_size), reg_sp));
+                /* 2. save $fp */
+                top = asm_insert_code(top, asm_new_code_sw(reg_fp, -fp_size, reg_sp));
+                /* 3. set $fp */
+                top = asm_insert_code(top, asm_new_code_move(reg_fp, reg_sp));
+                /* 4. grow stack */
+                top = asm_insert_code(top, asm_new_code_addi(reg_sp, reg_sp, -(stack_size+saved_size+ra_size+fp_size)));
+                /* 5. save callee saved */
+                for (int i = 0, j = 0; i < sizeof(callee_saved) / sizeof(asm_reg_t*); ++i) if (callee_saved[i]->used_by >= 0) {
+                    top = asm_insert_code(top, asm_new_code_sw(callee_saved[i], stack_size+j*4, reg_sp));
+                    ++j;
                 }
             }
             break;
