@@ -1,0 +1,8 @@
+FUNCTION main :
+WRITE a
+t0 := #0
+WRITE b
+t1 := #0
+WRITE c
+t2 := #0
+RETURN #0

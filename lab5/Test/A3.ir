@@ -1,0 +1,140 @@
+FUNCTION main :
+DEC b 12
+DEC c 40
+i := #0
+DEC a 20
+LABEL label1 :
+t0 := #1
+IF i < #5 GOTO label0
+t0 := #0
+LABEL label0 :
+IF t0 == #0 GOTO label2
+READ t3
+t2 := i * #4
+t1 := &a + t2
+*t1 := t3
+t4 := i + #1
+i := t4
+GOTO label1
+LABEL label2 :
+i := #0
+LABEL label9 :
+t5 := #1
+IF i < #4 GOTO label3
+t5 := #0
+LABEL label3 :
+IF t5 == #0 GOTO label10
+t6 := i + #1
+j := t6
+LABEL label7 :
+t7 := #1
+IF j < #5 GOTO label4
+t7 := #0
+LABEL label4 :
+IF t7 == #0 GOTO label8
+t9 := i * #4
+t8 := &a + t9
+t8 := *t8
+t11 := j * #4
+t10 := &a + t11
+t10 := *t10
+t12 := #1
+IF t8 > t10 GOTO label5
+t12 := #0
+LABEL label5 :
+IF t12 == #0 GOTO label6
+t14 := i * #4
+t13 := &a + t14
+t13 := *t13
+t := t13
+t18 := j * #4
+t17 := &a + t18
+t17 := *t17
+t16 := i * #4
+t15 := &a + t16
+*t15 := t17
+t20 := j * #4
+t19 := &a + t20
+*t19 := t
+LABEL label6 :
+t21 := j + #1
+j := t21
+GOTO label7
+LABEL label8 :
+t22 := i + #1
+i := t22
+GOTO label9
+LABEL label10 :
+i := #0
+LABEL label12 :
+t23 := #1
+IF i < #5 GOTO label11
+t23 := #0
+LABEL label11 :
+IF t23 == #0 GOTO label13
+t25 := i * #4
+t24 := &a + t25
+t24 := *t24
+WRITE t24
+t26 := #0
+t27 := i + #1
+i := t27
+GOTO label12
+LABEL label13 :
+t28 := #0
+t29 := &b
+t30 := &a
+LABEL label14 :
+IF t28 >= #3 GOTO label15
+*t29 := *t30
+t28 := t28 + #1
+t29 := t29 + #4
+t30 := t30 + #4
+GOTO label14
+LABEL label15 :
+t31 := #0
+t32 := &c
+t33 := &a
+LABEL label16 :
+IF t31 >= #5 GOTO label17
+*t32 := *t33
+t31 := t31 + #1
+t32 := t32 + #4
+t33 := t33 + #4
+GOTO label16
+LABEL label17 :
+i := #0
+LABEL label22 :
+t34 := #1
+IF i < #5 GOTO label18
+t34 := #0
+LABEL label18 :
+IF t34 == #0 GOTO label23
+t35 := #1
+IF i < #3 GOTO label19
+t35 := #0
+LABEL label19 :
+IF t35 == #0 GOTO label20
+t37 := i * #4
+t36 := &b + t37
+t36 := *t36
+WRITE t36
+t38 := #0
+t40 := i * #4
+t39 := &c + t40
+t39 := *t39
+WRITE t39
+t41 := #0
+GOTO label21
+LABEL label20 :
+t43 := i * #4
+t42 := &c + t43
+t42 := *t42
+WRITE t42
+t44 := #0
+LABEL label21 :
+t45 := i + #1
+i := t45
+GOTO label22
+LABEL label23 :
+RETURN #0

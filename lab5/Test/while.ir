@@ -1,0 +1,17 @@
+FUNCTION main :
+n := #100
+sum := #0
+i := #1
+LABEL label1 :
+t0 := #1
+IF i <= n GOTO label0
+t0 := #0
+LABEL label0 :
+IF t0 == #0 GOTO label2
+t1 := sum + i
+sum := t1
+t2 := i + #1
+i := t2
+GOTO label1
+LABEL label2 :
+RETURN #0

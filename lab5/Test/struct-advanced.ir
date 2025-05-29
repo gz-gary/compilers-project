@@ -1,0 +1,11 @@
+FUNCTION main :
+DEC test 52
+t0 := &test + #48
+t1 := t0 + #0
+*t1 := #0
+t2 := &test + #28
+t4 := #0 * #8
+t3 := t2 + t4
+t6 := #1 * #4
+t5 := t3 + t6
+*t5 := #3

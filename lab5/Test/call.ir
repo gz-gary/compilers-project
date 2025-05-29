@@ -1,0 +1,61 @@
+FUNCTION s :
+PARAM x
+t0 := x + #1
+RETURN t0
+FUNCTION p :
+PARAM x
+t1 := x - #1
+RETURN t1
+FUNCTION add :
+PARAM x
+PARAM y
+t2 := x + y
+RETURN t2
+FUNCTION gcd :
+PARAM x
+PARAM y
+t3 := #1
+IF y == #0 GOTO label0
+t3 := #0
+LABEL label0 :
+IF t3 == #0 GOTO label1
+RETURN x
+GOTO label2
+LABEL label1 :
+t4 := x - y
+ARG t4
+ARG y
+t5 := CALL gcd
+RETURN t5
+LABEL label2 :
+FUNCTION main :
+a := #2
+b := #10
+ARG a
+t6 := CALL s
+c := t6
+WRITE c
+t7 := #0
+ARG b
+t8 := CALL p
+c := t8
+WRITE c
+t9 := #0
+ARG b
+ARG a
+t10 := CALL add
+c := t10
+WRITE c
+t11 := #0
+ARG #3
+ARG #2
+t12 := CALL gcd
+c := t12
+WRITE c
+t13 := #0
+READ t14
+d := t14
+t15 := d + #1
+WRITE t15
+t16 := #0
+RETURN #0
