@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "IR.h"
 #include "macro.h"
+#include "config.h"
 
 extern void IR_yyrestart ( FILE *input_file );
 extern int IR_yylex();
