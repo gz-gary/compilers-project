@@ -12,7 +12,7 @@ void IR_function_push_stmt(IR_function *ir_func, IR_stmt *stmt) {
         IR_stmt *last_stmt = last_blk->stmts.tail->val;
         if(last_stmt->stmt_type == IR_GOTO_STMT ||
                 last_stmt->stmt_type == IR_IF_STMT ||
-                last_stmt->stmt_type == IR_RETURN_STMT) { // jump related
+                last_stmt->stmt_type == IR_RETURN_STMT) { // jump related，跳转相关的就要创建新的BB
             if(stmt->stmt_type == IR_GOTO_STMT && last_stmt->stmt_type == IR_IF_STMT) {
                 IR_goto_stmt *this_goto_stmt = (IR_goto_stmt*)stmt;
                 IR_if_stmt *last_if_stmt = (IR_if_stmt*)last_stmt;

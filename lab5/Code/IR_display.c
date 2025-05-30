@@ -15,15 +15,6 @@ void IR_block_print(IR_block *block, FILE *out) {
         VCALL(*i->val, print, out);
 }
 
-// #define DEBUG
-
-#ifdef DEBUG
-void IR_block_println(IR_block *block, FILE *out) {
-    IR_block_print(block, out);
-    fprintf(out, "-----------------\n");
-}
-#endif
-
 void IR_function_print(IR_function *func, FILE *out) {
     assert(func != NULL);
     assert(func->func_name != NULL);
@@ -31,22 +22,16 @@ void IR_function_print(IR_function *func, FILE *out) {
     for_vec(IR_var, var, func->params)
         fprintf(out, "PARAM v%u\n", *var);
 
-#ifdef DEBUG
-    fprintf(out, "Map-----------------\n");
-#endif
     for_map(IR_var, IR_Dec, it, func->map_dec) {
         fprintf(out, "DEC v%u %u\n", it->key, it->val.dec_size);
         fprintf(out, "v%u := &v%u\n", it->val.dec_addr, it->key);
     }
 
-#ifdef DEBUG
-    fprintf(out, "BBs-----------------\n");
-    for_list(IR_block_ptr, i, func->blocks)
-        IR_block_println(i->val, out);
-#else
-    for_list(IR_block_ptr, i, func->blocks)
+    //TODO: 这里也会打印entry和exit block，所以这里打印横线会多打几个
+    for_list(IR_block_ptr, i, func->blocks) {
         IR_block_print(i->val, out);
-#endif
+        printf("------------------\n");
+    }
 
     fprintf(out, "\n");
 }
