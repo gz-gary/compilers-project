@@ -27,7 +27,6 @@ void IR_function_build_graph(IR_function *ir_func) {
         }
         IR_stmt *last_stmt = i->val->stmts.tail->val;
         switch (last_stmt->stmt_type) {
-            // 在这里为graph连上边
             case IR_IF_STMT: {
                 IR_if_stmt *if_stmt = (IR_if_stmt*)last_stmt;
                 IR_block *next_blk = i->nxt->val;

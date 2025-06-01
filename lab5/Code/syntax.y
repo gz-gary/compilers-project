@@ -70,9 +70,7 @@ IR_globol   : MUL_EOL IR_program                        { ir_program_global = $2
             ;       
 IR_program  : IR_program IR_function                    {
                                                             $$ = $1;
-                                                            // 为函数构造闭包
                                                             IR_function_closure($2);
-                                                            // 将function放进program
                                                             VCALL($$->functions, push_back, $2);
                                                         }
             |                                           { $$ = NEW(IR_program); }
@@ -127,7 +125,7 @@ MUL_EOL     : MUL_EOL EOL
 %%
 
 int IR_yyerror(const char *msg) {
-    fprintf(YYERROR_OUTPUT, "IR syntax error: %s at line %d\n", msg, IR_yyget_lineno());
+    fprintf(YYERROR_OUTPUT, "IR syntax error: %s\n", msg);
     return 0;
 }
 
@@ -149,4 +147,3 @@ static void args_stack_pop(unsigned *argc_ptr, IR_val **argv_ptr) {
     *argv_ptr = argv;
     args_stack_top = 0;
 }
-
