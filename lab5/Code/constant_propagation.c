@@ -6,31 +6,30 @@
 
 
 static CPValue meetValue(CPValue v1, CPValue v2) {
-    /* 
+    /*
      * 计算不同数据流数据汇入后变量的CPValue的meet值
      * 要考虑 UNDEF/CONST/NAC 的不同情况
      */
     if (v1.kind == CONST && v2.kind == CONST) {
         if (v1.const_val == v2.const_val) {
-            return v1; // 两个常量相等, 返回任意一个
+            return v1;
         } else {
-            return get_NAC(); // 两个常量不相等, 返回UNDEF
+            return get_NAC();
         }
     }
     if (v1.kind == NAC || v2.kind == NAC) {
-        return get_NAC(); // NAC与其他值的meet为NAC
+        return get_NAC(); // 有一个是 NAC, 返回 NAC
     }
     if (v1.kind == UNDEF) {
-        return v2; // UNDEF与其他值的meet为其他值
+        return v2;
     } else if (v2.kind == UNDEF) {
-        return v1; // UNDEF与其他值的meet为其他值
+        return v1; // 有一个是 UNDEF, 返回另一个
     }
-    assert(0); // 不可能到达这里
-    return get_UNDEF(); // 默认返回UNDEF, 但不应该到达这里
+    return get_NAC(); // 其他情况
 }
 
 static CPValue calculateValue(IR_OP_TYPE IR_op_type, CPValue v1, CPValue v2) {
-    /* TODO
+    /*
      * 计算二元运算结果的CPValue值
      * 要考虑 UNDEF/CONST/NAC 的不同情况
      * if(v1.kind == CONST && v2.kind == CONST) {
@@ -64,13 +63,13 @@ static CPValue calculateValue(IR_OP_TYPE IR_op_type, CPValue v1, CPValue v2) {
     }
     if (v1.kind == NAC || v2.kind == NAC) {
         if (IR_op_type == IR_OP_DIV && v2.kind == CONST && v2.const_val == 0) {
-            return get_UNDEF(); // 除数为0时返回UNDEF
+            return get_UNDEF();
         }
+        return get_NAC(); // 有一个是 NAC, 返回 NAC
     }
     if (v1.kind == UNDEF || v2.kind == UNDEF) {
-        return get_UNDEF(); // UNDEF与其他值的运算结果为UNDEF
+        return get_UNDEF(); // 有一个是 UNDEF, 返回 UNDEF
     }
-    return get_NAC(); // NAC与其他值的运算结果为NAC
 }
 
 // UNDEF等价为在Map中不存在该Var的映射项
@@ -86,13 +85,11 @@ Fact_get_value_from_IR_val(Map_IR_var_CPValue *fact, IR_val val) {
     else return Fact_get_value_from_IR_var(fact, val.var);
 }
 
-// 更新Map中var的CPValue值
 static void
 Fact_update_value(Map_IR_var_CPValue *fact, IR_var var, CPValue val) {
     if (val.kind == UNDEF) VCALL(*fact, delete, var);
     else VCALL(*fact, set, var, val);
 }
-
 
 static bool
 Fact_meet_value(Map_IR_var_CPValue *fact, IR_var var, CPValue val) {
@@ -118,18 +115,19 @@ static void ConstantPropagation_teardown(ConstantPropagation *t) {
 
 static bool
 ConstantPropagation_isForward (ConstantPropagation *t) {
-    return true; // forward analysis
+    return true;
 }
 
 static Map_IR_var_CPValue*
 ConstantPropagation_newBoundaryFact (ConstantPropagation *t, IR_function *func) {
     Map_IR_var_CPValue *fact = NEW(Map_IR_var_CPValue);
     /* 
-     * 在Boundary(Entry/Exit?)中, 函数参数初始化为NAC
+     * 在Boundary(Entry/Exit?)中, 函数参数初始化为?
+     * for_vec(IR_var, param_ptr, func->params)
+     *     VCALL(*fact, insert, *param_ptr, get_UNDEF/CONST/NAC?());
      */
     for_vec(IR_var, param_ptr, func->params) {
-        IR_var param = *param_ptr;
-        VCALL(*fact, set, param, get_NAC()); // 参数初始为NAC
+        VCALL(*fact, insert, *param_ptr, get_NAC());
     }
     return fact;
 }
@@ -173,7 +171,6 @@ ConstantPropagation_meetInto (ConstantPropagation *t,
     return updated;
 }
 
-// 实现
 void ConstantPropagation_transferStmt (ConstantPropagation *t,
                                        IR_stmt *stmt,
                                        Map_IR_var_CPValue *fact) {
@@ -181,7 +178,7 @@ void ConstantPropagation_transferStmt (ConstantPropagation *t,
         IR_assign_stmt *assign_stmt = (IR_assign_stmt*)stmt;
         IR_var def = assign_stmt->rd;
         CPValue use_val = Fact_get_value_from_IR_val(fact, assign_stmt->rs);
-        /* TODO: solve IR_ASSIGN_STMT
+        /* solve IR_ASSIGN_STMT
          * Fact_update_value/Fact_meet_value?(...);
          */
         Fact_update_value(fact, def, use_val);
@@ -191,31 +188,19 @@ void ConstantPropagation_transferStmt (ConstantPropagation *t,
         IR_var def = op_stmt->rd;
         CPValue rs1_val = Fact_get_value_from_IR_val(fact, op_stmt->rs1);
         CPValue rs2_val = Fact_get_value_from_IR_val(fact, op_stmt->rs2);
-        //TODO: 这里要不要更新stmt的类型？
         /* solve IR_OP_STMT
          * Fact_update_value/Fact_meet_value?(...,calculateValue(...));
          */
-        CPValue result_val = calculateValue(IR_op_type, rs1_val, rs2_val);
-        if (result_val.kind == CONST) {
-            // stmt->stmt_type = IR_ASSIGN_STMT; // 如果结果是常量, 则将stmt类型改为IR_ASSIGN_STMT
-            VCALL(*stmt, print, stdout);
-            
-            printf("maybe need change type\n");
-        }
-        Fact_update_value(fact, def, result_val);
+        CPValue res_val = calculateValue(IR_op_type, rs1_val, rs2_val);
+        Fact_update_value(fact, def, res_val); // 肯定没问题了
     } else { // Other Stmt with new_def
         IR_var def = VCALL(*stmt, get_def);
         if(def != IR_VAR_NONE) {
             /* solve stmt with new_def
              * Fact_update_value/Fact_meet_value?(...);
              */
-            CPValue def_val = Fact_get_value_from_IR_var(fact, def);
-            if(def_val.kind == UNDEF) {
-                // 如果def是UNDEF, 则不更新
-                Fact_update_value(fact, def, get_NAC()); // 这里可以设置为NAC
-            } else {
-                Fact_update_value(fact, def, def_val); // 保持原值
-            }
+            // 如果这里定义了的话，传进来一个值，最靠谱的其实是给它定成NAC
+            Fact_update_value(fact, def, get_NAC());
         }
     }
 }

@@ -30,7 +30,7 @@ void IR_function_print(IR_function *func, FILE *out) {
     //TODO: 这里也会打印entry和exit block，所以这里打印横线会多打几个
     for_list(IR_block_ptr, i, func->blocks) {
         IR_block_print(i->val, out);
-        printf("------------------\n");
+        // printf("------------------\n");
     }
 
     fprintf(out, "\n");

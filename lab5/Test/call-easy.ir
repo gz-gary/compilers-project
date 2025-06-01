@@ -1,6 +1,0 @@
-FUNCTION box :
-RETURN #666
-FUNCTION main :
-t0 := CALL box
-n := t0
-RETURN #0

@@ -127,7 +127,7 @@ MUL_EOL     : MUL_EOL EOL
 %%
 
 int IR_yyerror(const char *msg) {
-    fprintf(YYERROR_OUTPUT, "IR syntax error: %s\n", msg);
+    fprintf(YYERROR_OUTPUT, "IR syntax error: %s at line %d\n", msg, IR_yyget_lineno());
     return 0;
 }
 

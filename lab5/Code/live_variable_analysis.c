@@ -17,8 +17,7 @@ static void LiveVariableAnalysis_teardown(LiveVariableAnalysis *t) {
 
 static bool
 LiveVariableAnalysis_isForward (LiveVariableAnalysis *t) {
-    // TODO: return isForward?;
-    return false; // backward analysis
+    return false;
 }
 
 static Set_IR_var*
@@ -59,11 +58,11 @@ static bool
 LiveVariableAnalysis_meetInto (LiveVariableAnalysis *t,
                                Set_IR_var *fact,
                                Set_IR_var *target) {
-    /* TODO:
-     * meet: union/intersect?
-     * return VCALL(*target, union_with/intersect_with?, fact);
+    /*
+     * meet: union
+     * return VCALL(*target, union_with, fact);
      */
-    TODO();
+    return VCALL(*target, union_with, fact);
 }
 
 void LiveVariableAnalysis_transferStmt (LiveVariableAnalysis *t,
@@ -72,22 +71,44 @@ void LiveVariableAnalysis_transferStmt (LiveVariableAnalysis *t,
     IR_var def = VCALL(*stmt, get_def);
     IR_use use = VCALL(*stmt, get_use_vec);
     /* TODO:
-     * kill/gen?
-     * 先执行kill还是先执行gen?
+     * 先执行kill
      * use:
      *  for(unsigned i = 0; i < use.use_cnt; i ++) {
      *      IR_val use_val = use.use_vec[i];
      *      if(!use_val.is_const) {
      *          IR_var use = use_val.var;
-     *          VCALL(*fact, insert/delete?, use); // kill/gen ?
+     *          VCALL(*fact, insert/delete?, use); // gen
      *      }     
      *  }
      * def:
      *  if(def != IR_VAR_NONE) { // 生成新def
-     *      VCALL(*fact, insert/delete?, def); // kill/gen ?
+     *      VCALL(*fact, insert/delete?, def); // kill
      *  }
      */
-    TODO();
+    // 先执行kill
+    // printf("def: v%u, use: ", def);
+    // for (unsigned i = 0; i < use.use_cnt; i++) {
+    //     IR_val use_val = use.use_vec[i];
+    //     if (!use_val.is_const) {
+    //         IR_var use_var = use_val.var;
+    //         printf("v%u ", use_var);
+    //     }
+    // }
+    // printf("\n");
+    if (def != IR_VAR_NONE) {  // def为kill，kill掉被def覆盖的变量
+        VCALL(*fact, delete, def);
+    }
+    for (unsigned i = 0; i < use.use_cnt; i ++) {
+        IR_val use_val = use.use_vec[i];
+        if(!use_val.is_const) {
+            IR_var use = use_val.var;
+            VCALL(*fact, insert, use); // use为gen
+        }
+    }
+    // printf("After transferStmt: ");
+    // for_set(IR_var, var, *fact)
+    //     printf("v%u ", var->key);
+    // printf("\n");
 }
 
 bool LiveVariableAnalysis_transferBlock (LiveVariableAnalysis *t,
@@ -166,7 +187,10 @@ static bool block_remove_dead_def (LiveVariableAnalysis *t, IR_block *blk) {
              *      updated = true;
              *  }
              */
-            TODO();
+            if (!VCALL(*new_out_fact, exist, def)) {
+                stmt->dead = true; // 标记为死代码
+                updated = true;
+            }
         }
         LiveVariableAnalysis_transferStmt(t, stmt, new_out_fact);
     }
