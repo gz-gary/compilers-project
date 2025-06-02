@@ -3,7 +3,7 @@
 //
 
 #include "copy_propagation.h"
-// 复制传播
+
 
 void Fact_def_use_init(Fact_def_use *fact, bool is_top) {
     fact->is_top = is_top;
@@ -29,6 +29,7 @@ static void CopyPropagation_teardown(CopyPropagation *t) {
 
 static bool
 CopyPropagation_isForward (CopyPropagation *t) {
+    // TODO: isForward?
     return true;
 }
 

@@ -58,7 +58,7 @@ void IR_optimize() {
             AvailableExpressionsAnalysis_remove_available_expr_def(availableExpressionsAnalysis, func);
             DELETE(availableExpressionsAnalysis);
 
-            //// Copy Propagation
+            // //// Copy Propagation
 
             copyPropagation = NEW(CopyPropagation);
             worklist_solver((DataflowAnalysis*)copyPropagation, func);
@@ -78,14 +78,14 @@ void IR_optimize() {
 
         //// Live Variable Analysis
 
-        while(true) {
-            liveVariableAnalysis = NEW(LiveVariableAnalysis);
-            worklist_solver((DataflowAnalysis*)liveVariableAnalysis, func); // 将子类强制转化为父类
-            // VCALL(*liveVariableAnalysis, printResult, func);
-            bool updated = LiveVariableAnalysis_remove_dead_def(liveVariableAnalysis, func);
-            DELETE(liveVariableAnalysis);
-            if(!updated) break;
-        }
+        // while(true) {
+        //     liveVariableAnalysis = NEW(LiveVariableAnalysis);
+        //     worklist_solver((DataflowAnalysis*)liveVariableAnalysis, func); // 将子类强制转化为父类
+        //     // VCALL(*liveVariableAnalysis, printResult, func);
+        //     bool updated = LiveVariableAnalysis_remove_dead_def(liveVariableAnalysis, func);
+        //     DELETE(liveVariableAnalysis);
+        //     if(!updated) break;
+        // }
 
     }
 }

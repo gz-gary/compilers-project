@@ -4,7 +4,6 @@
 
 #include "IR.h"
 #include <stdio.h>
-#include <assert.h>
 
 //// =============================== IR print ===============================
 
@@ -16,23 +15,15 @@ void IR_block_print(IR_block *block, FILE *out) {
 }
 
 void IR_function_print(IR_function *func, FILE *out) {
-    assert(func != NULL);
-    assert(func->func_name != NULL);
     fprintf(out, "FUNCTION %s :\n", func->func_name);
     for_vec(IR_var, var, func->params)
         fprintf(out, "PARAM v%u\n", *var);
-
     for_map(IR_var, IR_Dec, it, func->map_dec) {
         fprintf(out, "DEC v%u %u\n", it->key, it->val.dec_size);
         fprintf(out, "v%u := &v%u\n", it->val.dec_addr, it->key);
     }
-
-    //TODO: 这里也会打印entry和exit block，所以这里打印横线会多打几个
-    for_list(IR_block_ptr, i, func->blocks) {
+    for_list(IR_block_ptr, i, func->blocks)
         IR_block_print(i->val, out);
-        // printf("------------------\n");
-    }
-
     fprintf(out, "\n");
 }
 

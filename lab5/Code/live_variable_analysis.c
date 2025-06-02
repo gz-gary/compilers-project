@@ -87,19 +87,10 @@ void LiveVariableAnalysis_transferStmt (LiveVariableAnalysis *t,
      *      VCALL(*fact, insert/delete?, def); // kill/gen ?
      *  }
      */
-    // printf("def: v%u, use: ", def);
-    // for(unsigned i = 0; i < use.use_cnt; i ++) {
-    //     IR_val use_val = use.use_vec[i];
-    //     if(!use_val.is_const) {
-    //         IR_var use = use_val.var;
-    //         printf("v%u ", use);
-    //     }
+    // if(def != IR_VAR_NONE) {
+    //     // kill
+    //     VCALL(*fact, delete, def);
     // }
-    // printf("\n");
-    if(def != IR_VAR_NONE) {
-        // kill
-        VCALL(*fact, delete, def);
-    }
     for(unsigned i = 0; i < use.use_cnt; i ++) {
         IR_val use_val = use.use_vec[i];
         if(!use_val.is_const) {
@@ -186,10 +177,10 @@ static bool block_remove_dead_def (LiveVariableAnalysis *t, IR_block *blk) {
              *      updated = true;
              *  }
              */
-            // if(VCALL(*new_out_fact, exist, def) == false) {
-            //      stmt->dead = true;
-            //      updated = true;
-            // }
+            if(VCALL(*new_out_fact, exist, def) == false) {
+                 stmt->dead = true;
+                 updated = true;
+            }
         }
         LiveVariableAnalysis_transferStmt(t, stmt, new_out_fact);
     }

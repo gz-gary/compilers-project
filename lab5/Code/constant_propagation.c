@@ -6,7 +6,7 @@
 
 
 static CPValue meetValue(CPValue v1, CPValue v2) {
-    /*
+    /* TODO
      * 计算不同数据流数据汇入后变量的CPValue的meet值
      * 要考虑 UNDEF/CONST/NAC 的不同情况
      */
@@ -29,7 +29,7 @@ static CPValue meetValue(CPValue v1, CPValue v2) {
 }
 
 static CPValue calculateValue(IR_OP_TYPE IR_op_type, CPValue v1, CPValue v2) {
-    /*
+    /* TODO
      * 计算二元运算结果的CPValue值
      * 要考虑 UNDEF/CONST/NAC 的不同情况
      * if(v1.kind == CONST && v2.kind == CONST) {
@@ -115,13 +115,14 @@ static void ConstantPropagation_teardown(ConstantPropagation *t) {
 
 static bool
 ConstantPropagation_isForward (ConstantPropagation *t) {
+    // TODO: return isForward?;
     return true;
 }
 
 static Map_IR_var_CPValue*
 ConstantPropagation_newBoundaryFact (ConstantPropagation *t, IR_function *func) {
     Map_IR_var_CPValue *fact = NEW(Map_IR_var_CPValue);
-    /* 
+    /* TODO
      * 在Boundary(Entry/Exit?)中, 函数参数初始化为?
      * for_vec(IR_var, param_ptr, func->params)
      *     VCALL(*fact, insert, *param_ptr, get_UNDEF/CONST/NAC?());
@@ -178,7 +179,7 @@ void ConstantPropagation_transferStmt (ConstantPropagation *t,
         IR_assign_stmt *assign_stmt = (IR_assign_stmt*)stmt;
         IR_var def = assign_stmt->rd;
         CPValue use_val = Fact_get_value_from_IR_val(fact, assign_stmt->rs);
-        /* solve IR_ASSIGN_STMT
+        /* TODO: solve IR_ASSIGN_STMT
          * Fact_update_value/Fact_meet_value?(...);
          */
         Fact_update_value(fact, def, use_val);
@@ -188,18 +189,17 @@ void ConstantPropagation_transferStmt (ConstantPropagation *t,
         IR_var def = op_stmt->rd;
         CPValue rs1_val = Fact_get_value_from_IR_val(fact, op_stmt->rs1);
         CPValue rs2_val = Fact_get_value_from_IR_val(fact, op_stmt->rs2);
-        /* solve IR_OP_STMT
+        /* TODO: solve IR_OP_STMT
          * Fact_update_value/Fact_meet_value?(...,calculateValue(...));
          */
         CPValue res_val = calculateValue(IR_op_type, rs1_val, rs2_val);
-        Fact_update_value(fact, def, res_val); // 肯定没问题了
+        Fact_update_value(fact, def, res_val);
     } else { // Other Stmt with new_def
         IR_var def = VCALL(*stmt, get_def);
         if(def != IR_VAR_NONE) {
-            /* solve stmt with new_def
+            /* TODO: solve stmt with new_def
              * Fact_update_value/Fact_meet_value?(...);
              */
-            // 如果这里定义了的话，传进来一个值，最靠谱的其实是给它定成NAC
             Fact_update_value(fact, def, get_NAC());
         }
     }

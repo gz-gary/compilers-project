@@ -1,11 +1,15 @@
-#ifndef __IR_PARSE_H__
-#define __IR_PARSE_H__
+//
+// Created by hby on 22-11-24.
+//
 
-#include <stdio.h>
+#ifndef CODE_IR_PARSE_H
+#define CODE_IR_PARSE_H
+
 #include <stdbool.h>
-#include "IR.h"
-#include "macro.h"
+#include <stdio.h>
 #include "config.h"
+#include "IR.h"
+
 
 extern void IR_yyrestart ( FILE *input_file );
 extern int IR_yylex();
@@ -17,4 +21,4 @@ extern void IR_parse(const char *input_IR_path);
 extern IR_var get_IR_var(const char *id);
 extern IR_label get_IR_label(const char *id);
 
-#endif // __IR_PARSE_H__
+#endif //CODE_IR_PARSE_H

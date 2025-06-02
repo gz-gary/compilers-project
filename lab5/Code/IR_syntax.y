@@ -147,3 +147,4 @@ static void args_stack_pop(unsigned *argc_ptr, IR_val **argv_ptr) {
     *argv_ptr = argv;
     args_stack_top = 0;
 }
+

@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include "IR_parse.h"
 #include "IR_optimize.h"
-// #include "local_optimize.h"
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
