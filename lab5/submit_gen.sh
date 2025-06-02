@@ -1,3 +1,4 @@
+rm submit.zip
 rm -rf submit
 mkdir -p submit/Code
 cp Code/*.c submit/Code

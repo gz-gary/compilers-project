@@ -36,6 +36,16 @@ void IR_optimize() {
     AvailableExpressionsAnalysis *availableExpressionsAnalysis;
     CopyPropagation *copyPropagation;
     LiveVariableAnalysis *liveVariableAnalysis;
+    // for_vec(IR_function_ptr, j, ir_program_global->functions) {
+    //     IR_function *func = *j;
+    //     for (unsigned i = 0; i < 5; ++i) {
+    //         constantPropagation = NEW(ConstantPropagation);
+    //         worklist_solver((DataflowAnalysis*)constantPropagation, ir_program_global->functions[i]);
+    //         ConstantPropagation_constant_folding(constantPropagation, ir_program_global->functions[i]);
+    //         DELETE(constantPropagation);
+
+    //     }
+    // }
     for_vec(IR_function_ptr, i, ir_program_global->functions) {
         IR_function *func = *i;
 
@@ -78,14 +88,14 @@ void IR_optimize() {
 
         //// Live Variable Analysis
 
-        // while(true) {
-        //     liveVariableAnalysis = NEW(LiveVariableAnalysis);
-        //     worklist_solver((DataflowAnalysis*)liveVariableAnalysis, func); // 将子类强制转化为父类
-        //     // VCALL(*liveVariableAnalysis, printResult, func);
-        //     bool updated = LiveVariableAnalysis_remove_dead_def(liveVariableAnalysis, func);
-        //     DELETE(liveVariableAnalysis);
-        //     if(!updated) break;
-        // }
+        while(true) {
+            liveVariableAnalysis = NEW(LiveVariableAnalysis);
+            worklist_solver((DataflowAnalysis*)liveVariableAnalysis, func); // 将子类强制转化为父类
+            // VCALL(*liveVariableAnalysis, printResult, func);
+            bool updated = LiveVariableAnalysis_remove_dead_def(liveVariableAnalysis, func);
+            DELETE(liveVariableAnalysis);
+            if(!updated) break;
+        }
 
     }
 }
