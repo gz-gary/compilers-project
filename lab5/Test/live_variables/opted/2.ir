@@ -1,9 +1,0 @@
-FUNCTION main :
-READ v1
-v2 := v1
-READ v3
-v12 := v11
-WRITE v19
-WRITE v21
-RETURN v22
-
