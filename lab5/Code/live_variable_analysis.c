@@ -87,10 +87,10 @@ void LiveVariableAnalysis_transferStmt (LiveVariableAnalysis *t,
      *      VCALL(*fact, insert/delete?, def); // kill/gen ?
      *  }
      */
-    // if(def != IR_VAR_NONE) {
-    //     // kill
-    //     VCALL(*fact, delete, def);
-    // }
+    if(def != IR_VAR_NONE) {
+        // kill
+        VCALL(*fact, delete, def);
+    }
     for(unsigned i = 0; i < use.use_cnt; i ++) {
         IR_val use_val = use.use_vec[i];
         if(!use_val.is_const) {
